@@ -20,10 +20,10 @@ library(tidyverse) ; library(httr) ; library(jsonlite); library(dplyr)
 
 ## Get the access token
 
-This code uses your account details (substitute them in) to get an access token from the API
+This code uses your account details (store them in json format in the file `creds.json`) to get an access token from the API
 
 ```{r}
-data <- list("email"="me@gmail.com", "password" = "adsasdsad")
+data <-fromJSON("creds.json")
 link<-"https://barb-api.co.uk/api/v1/auth/token/"
 r<-httr::POST(url = link,
            body =  jsonlite::toJSON(data, pretty = T, auto_unbox = T),
