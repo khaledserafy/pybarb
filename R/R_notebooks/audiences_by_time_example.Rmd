@@ -94,7 +94,7 @@ bbc_1 %>% select(c(panel_region, audience_name, size_in_hundreds)) %>% pivot_wid
     names_from = panel_region,
     values_from = c(size_in_hundreds),
     names_vary = "slowest",
-    values_fn = "mean"
+    values_fn = mean
   )
 ```
 ## Age groups watching BBC 1 over a day
