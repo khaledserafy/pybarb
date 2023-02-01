@@ -23,7 +23,7 @@ library(tidyverse) ; library(httr) ; library(jsonlite); library(dplyr)
 This code uses your account details (substitute them in) to get an access token from the API
 
 ```{r}
-data <- list("email"="simon@coppelia.io", "password" = "JJtgXgvNFYiPie5")
+data <- list("email"="me@gmail.com", "password" = "adsasdsad")
 link<-"https://barb-api.co.uk/api/v1/auth/token/"
 r<-httr::POST(url = link,
            body =  jsonlite::toJSON(data, pretty = T, auto_unbox = T),
