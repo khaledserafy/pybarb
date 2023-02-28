@@ -20,7 +20,11 @@ library(tidyverse) ; library(httr) ; library(jsonlite); library(dplyr)
 
 ## Get the access token
 
-This code uses your account details (store them in json format in the file `creds.json`) to get an access token from the API
+This code uses your account details to get an access token from the API. Create a text file named `creds.json`. The file should include the email and password supplied by BARB. For example:
+
+```
+{"email": "me@coppelia.io", "password": "INSERT PASSWORD"}
+```
 
 ```{r}
 data <-fromJSON("creds.json")
