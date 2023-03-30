@@ -8,6 +8,7 @@ dependencies:
   - python<3.10
   - pandas
   - matplotlib
+  - sqlalchemy
   - numpy
   - plotly
   - seaborn
@@ -15,3 +16,4 @@ dependencies:
   - sphinx
   - pytest
   - jupyterlab>3.0.7
+  - openpyxl

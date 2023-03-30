@@ -8,3 +8,5 @@ python/jupyter_notebooks/.ipynb_checkpoints/
 python/pybarb/.vscode/
 
 python/pybarb/__pycache__/
+
+python/pybarb/data/
