@@ -29,7 +29,7 @@ pybarb is a python package for interacting with the Barb API. It allows you to c
 
 - [The package code](https://github.com/coppeliaMLA/barb_api/tree/pyBARB_dev/python/pybarb)
 - [The getting started guide](http://www.coppelia.io/barb_api/python/pybarb/getting_started.html)
-- [The code documentation](http://www.coppelia.io/barb_api/python/pybarb/documentation/_build/html/index.html)
+- The code documentation
 
 #### Installing pybarb
 
