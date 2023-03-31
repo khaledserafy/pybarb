@@ -1,5 +1,5 @@
 # barb_api
-A public repository containing code packages and notebook examples for interacting with [BARB's web api](https://barb-api.co.uk/api-docs).
+A public repository containing code packages and notebook examples for interacting with [BARB's web API](https://barb-api.co.uk/api-docs).
 
 ## About Barb
 
@@ -21,17 +21,17 @@ There are additional endpoints for users to look up Stations, Panel numbers, Adv
 
 The data in the API are enriched with metadata from Barb and Clearcast on programmes and adverts.
 
-# What's in this repository?
+## What's in this repository?
 
-## pybarb
+### pybarb
 
 pybarb is a python package for interacting with the Barb API. It allows you to connect to an API endpoint, query it, and convert the results into a number of formats including pandas dataframes and csv, excel and json files. It also allows you to write the results to a database using SQLAlchemy. 
 
-- [The package code](python/pybarb)
+- [The package code](https://github.com/coppeliaMLA/barb_api/tree/pyBARB_dev/python/pybarb)
 - [The getting started guide](python/pybarb/getting_started.html)
 - [The code documentation]()
 
-## Installing pybarb
+#### Installing pybarb
 
 pybarb is available on pip and can be installed by running:
 
@@ -40,12 +40,12 @@ pip install pybarb
 ```
 
 
-## barbR
+### barbR
 
 barbR will be (soon) our R package for interacting with the Barb API. Some R notebooks are already available [here](R/R_notebooks)
 
 
-## Other resources
+### Other resources
 
 This repository also contains
 
