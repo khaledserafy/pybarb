@@ -10,3 +10,7 @@ python/pybarb/.vscode/
 python/pybarb/__pycache__/
 
 python/pybarb/data/
+
+python/pybarb/dist/
+
+python/pybarb/pybarb.egg-info/

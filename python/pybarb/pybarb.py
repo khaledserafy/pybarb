@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import sqlalchemy
 import plotly.graph_objs as go
+import re
 
 
 class BarbAPI:
@@ -15,8 +16,12 @@ class BarbAPI:
         connected (bool): Whether the API is currently connected.
 
     Methods:
-        connect: Connect to the Barb API.
-        query: Make a query to the Barb API.
+        connect(): Connects to the Barb API.
+        programme_ratings(min_transmission_date, max_transmission_date, station=None, panel=None, consolidated=True, last_updated_greater_than=None, use_reporting_days=True, limit=5000): Gets the programme ratings for a given date range.
+        advertising_spots(min_transmission_date, max_transmission_date, station=None, panel=None, advertiser=None, buyer=None, consolidated=True, standardise_audiences=None, use_reporting_days=True, last_updated_greater_than=None, limit=5000): Gets the advertising spots for a given date range.
+        audiences_by_time(min_transmission_date, max_transmission_date, time_period_length, viewing_status, station=None, panel=None, use_polling_days=True, last_updated_greater_than=None, limit=5000): Gets the audiences by time for a given date range.
+        audiences_by_day(min_transmission_date, max_transmission_date, station=None, panel=None, use_polling_days=True, last_updated_greater_than=None, limit=5000): Gets the audiences by day for a given date range.
+
     """
 
     def __init__(self, api_key: str):
@@ -34,9 +39,6 @@ class BarbAPI:
     def connect(self):
         """
         Connects to the Barb API.
-
-        Returns:
-            bool: True if the connection is successful, False otherwise.
         """
         # Code to connect to the Barb API
         self.connected = True
@@ -48,6 +50,16 @@ class BarbAPI:
         self.headers = {'Authorization': 'Bearer {}'.format(access_token)}
 
     def get_station_code(self, station_name):
+        """
+        Gets the station code for a given station name.
+        
+        Args:
+            station_name (str): The name of the station to query.
+        
+        Returns:
+            str: The station code.
+        """
+
         api_url = f"{self.api_root}stations/"
         r = requests.get(url=api_url, headers=self.headers)
         api_data = r.json()
@@ -60,6 +72,16 @@ class BarbAPI:
         return station_code
 
     def get_panel_code(self, panel_region):
+        """
+        Gets the panel code for a given panel region.
+
+        Args:
+            panel_region (str): The name of the panel to query.
+
+        Returns:
+            str: The panel code.
+        """
+
         api_url = f"{self.api_root}panels/"
         r = requests.get(url=api_url, headers=self.headers)
         api_data = r.json()
@@ -76,15 +98,17 @@ class BarbAPI:
         Gets the programme ratings for a given date range.
 
             Args:
-                min_transmission_date (str): The start date for the query. Format: YYYY-MM-DD
-                max_transmission_date (str): The end date for the query. Format: YYYY-MM-DD
-                station (str): The name of the station to query. If None, all stations are queried.
-                panel (str): The name of the panel to query. If None, all panels are queried.
+                min_transmission_date (str): The minimum transmission date to query.
+                max_transmission_date (str): The maximum transmission date to query.
+                station (str): The name of the station to query.
+                panel (str): The name of the panel to query.
                 consolidated (bool): Whether to return consolidated data.
-                limit (int): The maximum number of results to return. Default is 5000.
+                last_updated_greater_than (str): The last updated date to query.
+                use_reporting_days (bool): Whether to use reporting days.
+                limit (int): The maximum number of results to return.
 
             Returns:
-                BarbAPI: The BarbAPI object.
+                ProgrammeRatingsResultSet: The programme ratings result set.
         """
 
         # The query parameters
@@ -99,6 +123,25 @@ class BarbAPI:
     def advertising_spots(self, min_transmission_date, max_transmission_date, station=None, panel=None, advertiser=None,
                           buyer=None, consolidated=True, standardise_audiences=None, use_reporting_days=True,
                           last_updated_greater_than=None, limit=5000):
+        """
+        Gets the advertising spots for a given date range.
+
+            Args:
+                min_transmission_date (str): The minimum transmission date to query.
+                max_transmission_date (str): The maximum transmission date to query.
+                station (str): The name of the station to query.
+                panel (str): The name of the panel to query.
+                advertiser (str): The name of the advertiser to query.
+                buyer (str): The name of the buyer to query.
+                consolidated (bool): Whether to return consolidated data.
+                standardise_audiences (bool): Whether to standardise audiences.
+                use_reporting_days (bool): Whether to use reporting days.
+                last_updated_greater_than (str): The last updated date to query.
+                limit (int): The maximum number of results to return.
+
+            Returns:
+                AdvertisingSpotsResultSet: The advertising spots result set.
+        """
 
         # The query parameters
         params = {"min_transmission_date": min_transmission_date, "max_transmission_date": max_transmission_date,
@@ -114,6 +157,24 @@ class BarbAPI:
 
     def audiences_by_time(self, min_transmission_date, max_transmission_date, time_period_length, viewing_status, station=None, panel=None,
                           use_polling_days=True, last_updated_greater_than=None, limit=5000):
+        """
+        Gets the audiences by time for a given date range.
+
+            Args:
+                min_transmission_date (str): The minimum transmission date to query.
+                max_transmission_date (str): The maximum transmission date to query.
+                time_period_length (str): The time period length to query.
+                viewing_status (str): The viewing status to query.
+
+                station (str): The name of the station to query.
+                panel (str): The name of the panel to query.
+                use_polling_days (bool): Whether to use polling days.
+                last_updated_greater_than (str): The last updated date to query.
+                limit (int): The maximum number of results to return.
+
+            Returns:
+                AudiencesByTimeResultSet: The audiences by time result set.
+        """
 
         # The query parameters
         params = {"min_transmission_date": min_transmission_date, "max_transmission_date": max_transmission_date,
@@ -126,8 +187,18 @@ class BarbAPI:
             "audiences_by_time", params)
 
         return AudiencesByTimeResultSet(api_response_data)
-
+    
     def query_event_endpoint(self, endpoint, parameters):
+        """
+        Queries the event endpoint.  
+            Args:
+                endpoint (str): The endpoint to query.
+                parameters (dict): The query parameters.
+
+            Returns:
+                dict: The API response data.
+        """
+        
         api_url = f"{self.api_root}{endpoint}"
         r = requests.get(url=api_url, params=parameters, headers=self.headers)
         r_json = r.json()
@@ -143,16 +214,79 @@ class BarbAPI:
                 r_json["audience_categories"])
 
         return api_response_data
+    
+    def list_stations(self, regex_filter=None):
+        """
+        Lists the stations available in the API.
+
+            Returns:
+                list: The stations result set.
+        """
+
+        api_url = f"{self.api_root}stations"
+        api_response_data = requests.get(url=api_url, headers=self.headers)
+
+        list_of_stations = [x['station_name'] for x in api_response_data.json()]
+
+        if regex_filter is not None:
+
+            regex = re.compile(regex_filter)
+            list_of_stations = list(filter(regex.search, list_of_stations))
+
+        return list_of_stations
+    
+    def list_panels(self, regex_filter=None):
+        """
+        Lists the panels available in the API.
+
+            Returns:
+                list: The panels result set.
+        """
+
+        api_url = f"{self.api_root}panels"
+        api_response_data = requests.get(url=api_url, headers=self.headers)
+
+        list_of_panels = [x['panel_region'] for x in api_response_data.json()]
+
+        if regex_filter is not None:
+
+            regex = re.compile(regex_filter)
+            list_of_panels = list(filter(regex.search, list_of_panels))
+
+        return list_of_panels
+    
+    def list_buyers(self, regex_filter=None):
+        """
+        Lists the buyers available in the API.
+
+            Returns:
+                list: The buyers result set.
+        """
+
+        api_url = f"{self.api_root}buyers"
+        api_response_data = requests.get(url=api_url, headers=self.headers)
+
+        list_of_buyers = api_response_data.json()
+
+        if regex_filter is not None:
+
+            regex = re.compile(regex_filter)
+            list_of_buyers = list(filter(regex.search, list_of_buyers))
+
+        return list_of_buyers
 
 
 class APIResultSet:
+    """
+    Represents a result set from the Barb API.
+    """
 
     def __init__(self, api_response_data: dict):
         """
-        Initializes a new instance of the BarbAPI class.
+        Initialises a new instance of the APIResultSet class.
 
         Args:
-            api_key (str): The API key for accessing the Barb API.
+            api_response_data (dict): The API response data.
         """
 
         self.api_response_data = api_response_data
@@ -167,38 +301,68 @@ class APIResultSet:
         """
         raise NotImplementedError()
     
-    def ts_plot(self):
-        """
-        Converts the API response data into a pandas dataframe.
-
-        Returns:
-            pandas.DataFrame: A dataframe containing the API response data.
-
-        """
-        raise NotImplementedError()
-
     def to_csv(self, file_name):
+        """
+        Saves the API response data as a CSV file.
+
+        Args:
+            file_name (str): The name of the CSV file to save.
+        """
         self.to_dataframe().to_csv(file_name, index=False)
 
     def to_excel(self, file_name):
+        """
+        Saves the API response data as an Excel file.
+
+        Args:
+            file_name (str): The name of the Excel file to save.
+        """
         self.to_dataframe().to_excel(file_name, index=False)
 
     def to_json(self, file_name):
+        """
+        Saves the API response data as a JSON file.
+
+        Args:
+            file_name (str): The name of the JSON file to save.
+        """
         with open(file_name, 'w') as f:
             json.dump(self.api_response_data, f)
 
     def to_sql(self, connection_string, table_name):
+        """
+        Saves the API response data as a SQL table.
+
+        Args:
+            connection_string (str): The connection string to the SQL database.
+            table_name (str): The name of the SQL table to save.
+        """
         df = self.to_dataframe()
         engine = sqlalchemy.create_engine(connection_string)
         df.to_sql(table_name, engine, if_exists='replace', index=False)
 
     def audience_pivot(self):
+        """
+        Converts the API response data into a pandas dataframe with the audience names as columns.
+
+        Returns:
+            pandas.DataFrame: A dataframe containing the API response data with the audience names as columns.
+
+        """
         df = self.to_dataframe()
         entity = 'programme_name' if 'programme_name' in df.columns else 'clearcast_commercial_title' if 'clearcast_commercial_title' in df.columns else 'activity'
         df = pd.pivot_table(df, index=['panel_region', 'station_name', 'date_of_transmission', entity], columns='audience_name', values='audience_size_hundreds', aggfunc=np.sum).fillna(0)
         return df
     
-    def ts_plot(self):
+    def ts_plot(self, filter=None):
+        """
+        Creates a plotly time series plot of the API response data.
+
+        Returns:
+            plotly.graph_objs.Figure: A plotly time series plot.
+
+        """
+
         df = self.audience_pivot().reset_index()
         traces = []
         for i, col in enumerate(df.columns[4:]):
@@ -227,8 +391,11 @@ class APIResultSet:
 
 
 class ProgrammeRatingsResultSet(APIResultSet):
-
-    def to_dataframe(self, pivot_audiences=True):
+    """
+    Represents a programme ratings result set from the Barb API.
+    """
+    
+    def to_dataframe(self):
         """
         Converts the API response data into a pandas dataframe.
 
@@ -255,7 +422,6 @@ class ProgrammeRatingsResultSet(APIResultSet):
                            'episode_number': e['episode']['episode_number'] if 'episode' in e else None,
                            'episode_name': e['episode']['episode_name'] if 'episode' in e else None,
                            'genre': e['genre'] if 'genre' in e else None,
-                           'platforms': ", ".join(e['platforms']),
                            'audience_code': v['audience_code'],
                            'audience_size_hundreds': v['audience_size_hundreds']})
         # Convert the result into a data frame
@@ -275,11 +441,19 @@ class ProgrammeRatingsResultSet(APIResultSet):
         return df
     
 
-
-
 class AdvertisingSpotsResultSet(APIResultSet):
+    """
+    Represents an advertising spots result set from the Barb API.
+    """
 
-    def to_dataframe(self, pivot_audiences=True):
+    def to_dataframe(self):
+        """
+        Converts the API response data into a pandas dataframe.
+
+        Returns:
+            pandas.DataFrame: A dataframe containing the API response data.
+
+        """
 
         # Loop through the events and then the audiences within the events
         spot_data = []
@@ -305,7 +479,6 @@ class AdvertisingSpotsResultSet(APIResultSet):
                                   'clearcast_advertiser_name': e['clearcast_information']['advertiser_name'] if e['clearcast_information'] is not None else None,
                                   'campaign_approval_id': e['campaign_approval_id'],
                                   'sales_house_name': e['sales_house']['sales_house_name'],
-                                  'platforms': ", ".join(e['platforms']),
                                   'audience_code': v['audience_code'],
                                   'audience_size_hundreds': v['audience_size_hundreds']})
         # Convert the result into a data frame
@@ -326,8 +499,18 @@ class AdvertisingSpotsResultSet(APIResultSet):
 
 
 class AudiencesByTimeResultSet(APIResultSet):
+    """
+    Represents an audiences by time result set from the Barb API.
+    """
 
-    def to_dataframe(self, pivot_audiences=True):
+    def to_dataframe(self):
+        """
+        Converts the API response data into a pandas dataframe.
+
+        Returns:
+            pandas.DataFrame: A dataframe containing the API response data.
+
+        """
 
         # Loop through the events and then the audiences within the events
         audience_data = []
@@ -338,7 +521,6 @@ class AudiencesByTimeResultSet(APIResultSet):
                                       'date_of_transmission': e['date_of_transmission'],
                                       'activity': e['activity'],
                                       'transmission_time_period_start': e['transmission_time_period_start']['standard_datetime'],
-                                      'platforms': ", ".join(e['platforms']),
                                       'audience_code': v['audience_code'],
                                       'audience_size_hundreds': v['audience_size_hundreds']})
         # Convert the result into a data frame

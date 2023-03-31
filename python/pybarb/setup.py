@@ -2,10 +2,12 @@ from setuptools import setup, find_packages
 
 setup(
     name='pybarb',
-    version='0.1',
+    version='0.3',
     packages=find_packages(),
     install_requires=[
-        'requests',
+        'pandas',
+        'sqlalchemy',
+        'plotly' 
     ],
     author='Simon Raper',
     author_email='info@barb.co.uk',
