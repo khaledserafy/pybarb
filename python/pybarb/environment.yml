@@ -1,0 +1,19 @@
+name: pybarb
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - pip
+  - nodejs
+  - python<3.10
+  - pandas
+  - matplotlib
+  - sqlalchemy
+  - numpy
+  - plotly
+  - seaborn
+  - pyyaml
+  - sphinx
+  - pytest
+  - jupyterlab>3.0.7
+  - openpyxl

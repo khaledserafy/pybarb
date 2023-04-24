@@ -1,0 +1,623 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Welcome to the documentation for pybarb &mdash; pybarb  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="#" class="icon icon-home"> pybarb
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">Welcome to the documentation for pybarb</a><ul>
+<li><a class="reference internal" href="#pybarb.APIResultSet"><code class="docutils literal notranslate"><span class="pre">APIResultSet</span></code></a><ul>
+<li><a class="reference internal" href="#pybarb.APIResultSet.audience_pivot"><code class="docutils literal notranslate"><span class="pre">APIResultSet.audience_pivot()</span></code></a></li>
+<li><a class="reference internal" href="#pybarb.APIResultSet.to_csv"><code class="docutils literal notranslate"><span class="pre">APIResultSet.to_csv()</span></code></a></li>
+<li><a class="reference internal" href="#pybarb.APIResultSet.to_dataframe"><code class="docutils literal notranslate"><span class="pre">APIResultSet.to_dataframe()</span></code></a></li>
+<li><a class="reference internal" href="#pybarb.APIResultSet.to_excel"><code class="docutils literal notranslate"><span class="pre">APIResultSet.to_excel()</span></code></a></li>
+<li><a class="reference internal" href="#pybarb.APIResultSet.to_json"><code class="docutils literal notranslate"><span class="pre">APIResultSet.to_json()</span></code></a></li>
+<li><a class="reference internal" href="#pybarb.APIResultSet.to_sql"><code class="docutils literal notranslate"><span class="pre">APIResultSet.to_sql()</span></code></a></li>
+<li><a class="reference internal" href="#pybarb.APIResultSet.ts_plot"><code class="docutils literal notranslate"><span class="pre">APIResultSet.ts_plot()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pybarb.AdvertisingSpotsResultSet"><code class="docutils literal notranslate"><span class="pre">AdvertisingSpotsResultSet</span></code></a><ul>
+<li><a class="reference internal" href="#pybarb.AdvertisingSpotsResultSet.to_dataframe"><code class="docutils literal notranslate"><span class="pre">AdvertisingSpotsResultSet.to_dataframe()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pybarb.AudiencesByTimeResultSet"><code class="docutils literal notranslate"><span class="pre">AudiencesByTimeResultSet</span></code></a><ul>
+<li><a class="reference internal" href="#pybarb.AudiencesByTimeResultSet.to_dataframe"><code class="docutils literal notranslate"><span class="pre">AudiencesByTimeResultSet.to_dataframe()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pybarb.BarbAPI"><code class="docutils literal notranslate"><span class="pre">BarbAPI</span></code></a><ul>
+<li><a class="reference internal" href="#pybarb.BarbAPI.api_key"><code class="docutils literal notranslate"><span class="pre">BarbAPI.api_key</span></code></a></li>
+<li><a class="reference internal" href="#pybarb.BarbAPI.connected"><code class="docutils literal notranslate"><span class="pre">BarbAPI.connected</span></code></a></li>
+<li><a class="reference internal" href="#pybarb.BarbAPI.connect"><code class="docutils literal notranslate"><span class="pre">BarbAPI.connect()</span></code></a></li>
+<li><a class="reference internal" href="#pybarb.BarbAPI.programme_ratings"><code class="docutils literal notranslate"><span class="pre">BarbAPI.programme_ratings()</span></code></a></li>
+<li><a class="reference internal" href="#pybarb.BarbAPI.advertising_spots"><code class="docutils literal notranslate"><span class="pre">BarbAPI.advertising_spots()</span></code></a></li>
+<li><a class="reference internal" href="#pybarb.BarbAPI.audiences_by_time"><code class="docutils literal notranslate"><span class="pre">BarbAPI.audiences_by_time()</span></code></a></li>
+<li><a class="reference internal" href="#pybarb.BarbAPI.audiences_by_day"><code class="docutils literal notranslate"><span class="pre">BarbAPI.audiences_by_day()</span></code></a></li>
+<li><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">BarbAPI.advertising_spots()</span></code></a></li>
+<li><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">BarbAPI.audiences_by_time()</span></code></a></li>
+<li><a class="reference internal" href="#id2"><code class="docutils literal notranslate"><span class="pre">BarbAPI.connect()</span></code></a></li>
+<li><a class="reference internal" href="#pybarb.BarbAPI.get_panel_code"><code class="docutils literal notranslate"><span class="pre">BarbAPI.get_panel_code()</span></code></a></li>
+<li><a class="reference internal" href="#pybarb.BarbAPI.get_station_code"><code class="docutils literal notranslate"><span class="pre">BarbAPI.get_station_code()</span></code></a></li>
+<li><a class="reference internal" href="#pybarb.BarbAPI.list_buyers"><code class="docutils literal notranslate"><span class="pre">BarbAPI.list_buyers()</span></code></a></li>
+<li><a class="reference internal" href="#pybarb.BarbAPI.list_panels"><code class="docutils literal notranslate"><span class="pre">BarbAPI.list_panels()</span></code></a></li>
+<li><a class="reference internal" href="#pybarb.BarbAPI.list_stations"><code class="docutils literal notranslate"><span class="pre">BarbAPI.list_stations()</span></code></a></li>
+<li><a class="reference internal" href="#id3"><code class="docutils literal notranslate"><span class="pre">BarbAPI.programme_ratings()</span></code></a></li>
+<li><a class="reference internal" href="#pybarb.BarbAPI.query_event_endpoint"><code class="docutils literal notranslate"><span class="pre">BarbAPI.query_event_endpoint()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pybarb.ProgrammeRatingsResultSet"><code class="docutils literal notranslate"><span class="pre">ProgrammeRatingsResultSet</span></code></a><ul>
+<li><a class="reference internal" href="#pybarb.ProgrammeRatingsResultSet.to_dataframe"><code class="docutils literal notranslate"><span class="pre">ProgrammeRatingsResultSet.to_dataframe()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+</div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">pybarb</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#">Docs</a> &raquo;</li>
+        
+      <li>Welcome to the documentation for pybarb</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="welcome-to-the-documentation-for-pybarb">
+<h1>Welcome to the documentation for pybarb<a class="headerlink" href="#welcome-to-the-documentation-for-pybarb" title="Permalink to this heading">¶</a></h1>
+<blockquote>
+<div><p>Contents:</p>
+<div class="toctree-wrapper compound">
+</div>
+<span class="target" id="module-pybarb"></span><dl class="py class">
+<dt class="sig sig-object py" id="pybarb.APIResultSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pybarb.</span></span><span class="sig-name descname"><span class="pre">APIResultSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_response_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.APIResultSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a result set from the Barb API.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.APIResultSet.audience_pivot">
+<span class="sig-name descname"><span class="pre">audience_pivot</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.APIResultSet.audience_pivot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts the API response data into a pandas dataframe with the audience names as columns.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dataframe containing the API response data with the audience names as columns.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.APIResultSet.to_csv">
+<span class="sig-name descname"><span class="pre">to_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.APIResultSet.to_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves the API response data as a CSV file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>file_name</strong> (<em>str</em>) – The name of the CSV file to save.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.APIResultSet.to_dataframe">
+<span class="sig-name descname"><span class="pre">to_dataframe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.APIResultSet.to_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts the API response data into a pandas dataframe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dataframe containing the API response data.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.APIResultSet.to_excel">
+<span class="sig-name descname"><span class="pre">to_excel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.APIResultSet.to_excel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves the API response data as an Excel file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>file_name</strong> (<em>str</em>) – The name of the Excel file to save.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.APIResultSet.to_json">
+<span class="sig-name descname"><span class="pre">to_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.APIResultSet.to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves the API response data as a JSON file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>file_name</strong> (<em>str</em>) – The name of the JSON file to save.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.APIResultSet.to_sql">
+<span class="sig-name descname"><span class="pre">to_sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection_string</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.APIResultSet.to_sql" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves the API response data as a SQL table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>connection_string</strong> (<em>str</em>) – The connection string to the SQL database.</p></li>
+<li><p><strong>table_name</strong> (<em>str</em>) – The name of the SQL table to save.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.APIResultSet.ts_plot">
+<span class="sig-name descname"><span class="pre">ts_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.APIResultSet.ts_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a plotly time series plot of the API response data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A plotly time series plot.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>plotly.graph_objs.Figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pybarb.AdvertisingSpotsResultSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pybarb.</span></span><span class="sig-name descname"><span class="pre">AdvertisingSpotsResultSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_response_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.AdvertisingSpotsResultSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents an advertising spots result set from the Barb API.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.AdvertisingSpotsResultSet.to_dataframe">
+<span class="sig-name descname"><span class="pre">to_dataframe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.AdvertisingSpotsResultSet.to_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts the API response data into a pandas dataframe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dataframe containing the API response data.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pybarb.AudiencesByTimeResultSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pybarb.</span></span><span class="sig-name descname"><span class="pre">AudiencesByTimeResultSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_response_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.AudiencesByTimeResultSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents an audiences by time result set from the Barb API.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.AudiencesByTimeResultSet.to_dataframe">
+<span class="sig-name descname"><span class="pre">to_dataframe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.AudiencesByTimeResultSet.to_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts the API response data into a pandas dataframe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dataframe containing the API response data.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pybarb.BarbAPI">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pybarb.</span></span><span class="sig-name descname"><span class="pre">BarbAPI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.BarbAPI" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class for connecting to the Barb API and making queries.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybarb.BarbAPI.api_key">
+<span class="sig-name descname"><span class="pre">api_key</span></span><a class="headerlink" href="#pybarb.BarbAPI.api_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>The API key for accessing the Barb API.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybarb.BarbAPI.connected">
+<span class="sig-name descname"><span class="pre">connected</span></span><a class="headerlink" href="#pybarb.BarbAPI.connected" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether the API is currently connected.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.BarbAPI.connect">
+<span class="sig-name descname"><span class="pre">connect</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.BarbAPI.connect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connects to the Barb API.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.BarbAPI.programme_ratings">
+<span class="sig-name descname"><span class="pre">programme_ratings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min_transmission_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_transmission_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">panel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">consolidated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_updated_greater_than</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_reporting_days</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.BarbAPI.programme_ratings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the programme ratings for a given date range.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.BarbAPI.advertising_spots">
+<span class="sig-name descname"><span class="pre">advertising_spots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min_transmission_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_transmission_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">panel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">advertiser</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buyer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">consolidated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardise_audiences</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_reporting_days</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_updated_greater_than</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.BarbAPI.advertising_spots" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the advertising spots for a given date range.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.BarbAPI.audiences_by_time">
+<span class="sig-name descname"><span class="pre">audiences_by_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min_transmission_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_transmission_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_period_length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viewing_status</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">panel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_polling_days</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_updated_greater_than</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.BarbAPI.audiences_by_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the audiences by time for a given date range.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.BarbAPI.audiences_by_day">
+<span class="sig-name descname"><span class="pre">audiences_by_day</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min_transmission_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_transmission_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">panel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_polling_days</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_updated_greater_than</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.BarbAPI.audiences_by_day" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the audiences by day for a given date range.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">advertising_spots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min_transmission_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_transmission_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">panel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">advertiser</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buyer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">consolidated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardise_audiences</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_reporting_days</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_updated_greater_than</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the advertising spots for a given date range.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>min_transmission_date (str): The minimum transmission date to query.
+max_transmission_date (str): The maximum transmission date to query.
+station (str): The name of the station to query.
+panel (str): The name of the panel to query.
+advertiser (str): The name of the advertiser to query.
+buyer (str): The name of the buyer to query.
+consolidated (bool): Whether to return consolidated data.
+standardise_audiences (bool): Whether to standardise audiences.
+use_reporting_days (bool): Whether to use reporting days.
+last_updated_greater_than (str): The last updated date to query.
+limit (int): The maximum number of results to return.</p>
+</dd>
+<dt>Returns:</dt><dd><p>AdvertisingSpotsResultSet: The advertising spots result set.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">audiences_by_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min_transmission_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_transmission_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_period_length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viewing_status</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">panel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_polling_days</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_updated_greater_than</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the audiences by time for a given date range.</p>
+<blockquote>
+<div><dl>
+<dt>Args:</dt><dd><p>min_transmission_date (str): The minimum transmission date to query.
+max_transmission_date (str): The maximum transmission date to query.
+time_period_length (str): The time period length to query.
+viewing_status (str): The viewing status to query.</p>
+<p>station (str): The name of the station to query.
+panel (str): The name of the panel to query.
+use_polling_days (bool): Whether to use polling days.
+last_updated_greater_than (str): The last updated date to query.
+limit (int): The maximum number of results to return.</p>
+</dd>
+<dt>Returns:</dt><dd><p>AudiencesByTimeResultSet: The audiences by time result set.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-name descname"><span class="pre">connect</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#id2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connects to the Barb API.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.BarbAPI.get_panel_code">
+<span class="sig-name descname"><span class="pre">get_panel_code</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">panel_region</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.BarbAPI.get_panel_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the panel code for a given panel region.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>panel_region</strong> (<em>str</em>) – The name of the panel to query.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The panel code.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.BarbAPI.get_station_code">
+<span class="sig-name descname"><span class="pre">get_station_code</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">station_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.BarbAPI.get_station_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the station code for a given station name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>station_name</strong> (<em>str</em>) – The name of the station to query.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The station code.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.BarbAPI.list_buyers">
+<span class="sig-name descname"><span class="pre">list_buyers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">regex_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.BarbAPI.list_buyers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lists the buyers available in the API.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Returns:</dt><dd><p>list: The buyers result set.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.BarbAPI.list_panels">
+<span class="sig-name descname"><span class="pre">list_panels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">regex_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.BarbAPI.list_panels" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lists the panels available in the API.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Returns:</dt><dd><p>list: The panels result set.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.BarbAPI.list_stations">
+<span class="sig-name descname"><span class="pre">list_stations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">regex_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.BarbAPI.list_stations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lists the stations available in the API.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Returns:</dt><dd><p>list: The stations result set.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">programme_ratings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min_transmission_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_transmission_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">panel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">consolidated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_updated_greater_than</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_reporting_days</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the programme ratings for a given date range.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>min_transmission_date (str): The minimum transmission date to query.
+max_transmission_date (str): The maximum transmission date to query.
+station (str): The name of the station to query.
+panel (str): The name of the panel to query.
+consolidated (bool): Whether to return consolidated data.
+last_updated_greater_than (str): The last updated date to query.
+use_reporting_days (bool): Whether to use reporting days.
+limit (int): The maximum number of results to return.</p>
+</dd>
+<dt>Returns:</dt><dd><p>ProgrammeRatingsResultSet: The programme ratings result set.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.BarbAPI.query_event_endpoint">
+<span class="sig-name descname"><span class="pre">query_event_endpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">endpoint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.BarbAPI.query_event_endpoint" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Queries the event endpoint.</dt><dd><dl class="simple">
+<dt>Args:</dt><dd><p>endpoint (str): The endpoint to query.
+parameters (dict): The query parameters.</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict: The API response data.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pybarb.ProgrammeRatingsResultSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pybarb.</span></span><span class="sig-name descname"><span class="pre">ProgrammeRatingsResultSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_response_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.ProgrammeRatingsResultSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a programme ratings result set from the Barb API.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pybarb.ProgrammeRatingsResultSet.to_dataframe">
+<span class="sig-name descname"><span class="pre">to_dataframe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pybarb.ProgrammeRatingsResultSet.to_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts the API response data into a pandas dataframe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dataframe containing the API response data.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div></blockquote>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this heading">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2023, Simon Raper
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
