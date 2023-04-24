@@ -3,7 +3,11 @@ A public repository containing code packages and notebook examples for interacti
 
 ## About Barb
 
-TBC
+Barb is the industry’s standard for understanding what people watch.
+
+Barb's hybrid approach integrates people-based panel data with census-level online viewing data. Barb's methodology enables us to deliver inclusive measurement of total identified viewing across all broadcast, VOD and video-sharing platforms, delivered onto and consumed via multiple platforms and devices.
+
+As the past, present and future of total viewing measurement, Barb is uniquely placed to empower transformation of the UK TV and advertising ecosystem, through integrated audience data and actionable insights.
 
 ## About the Barb API
 
