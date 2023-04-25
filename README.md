@@ -43,13 +43,6 @@ pybarb is available on pip and can be installed by running:
 pip install pybarb
 ```
 
-### Other resources
-
-This repository also contains
-
-- Jupyter notebooks demonstrating how the Barb API can be accessed in python without using pybarb
-- Some geofiles that may be useful for plotting maps using the data accessible with the API
-
 ## If you are more of an R user...
 
 Then check out Neil's [baRb](https://github.com/neilc-itv/baRb) repository!
