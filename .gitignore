@@ -14,3 +14,13 @@ python/pybarb/data/
 python/pybarb/dist/
 
 python/pybarb/pybarb.egg-info/
+
+jupyter_notebooks/.ipynb_checkpoints/
+
+pybarb/__pycache__/
+
+pybarb/.vscode/
+
+pybarb/dist/
+
+pybarb/pybarb.egg-info/

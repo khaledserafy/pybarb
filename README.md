@@ -1,11 +1,11 @@
 # barb_api
-A public repository containing code packages and notebook examples for interacting with [BARB's web API](https://barb-api.co.uk/api-docs).
+A python package for interacting with [BARB's web API](https://barb-api.co.uk/api-docs).
 
 ## About Barb
 
 Barb is the industry’s standard for understanding what people watch.
 
-Barb's hybrid approach integrates people-based panel data with census-level online viewing data. Barb's methodology enables us to deliver inclusive measurement of total identified viewing across all broadcast, VOD and video-sharing platforms, delivered onto and consumed via multiple platforms and devices.
+Barb's hybrid approach integrates people-based panel data with census-level online viewing data. Barb's methodology enables them to deliver inclusive measurement of total identified viewing across all broadcast, VOD and video-sharing platforms, delivered onto and consumed via multiple platforms and devices.
 
 As the past, present and future of total viewing measurement, Barb is uniquely placed to empower transformation of the UK TV and advertising ecosystem, through integrated audience data and actionable insights.
 
@@ -32,8 +32,20 @@ The data in the API are enriched with metadata from Barb and Clearcast on progra
 pybarb is a python package for interacting with the Barb API. It allows you to connect to an API endpoint, query it, and convert the results into a number of formats including pandas dataframes and csv, excel and json files. It also allows you to write the results to a database using SQLAlchemy. 
 
 - [The package code](https://github.com/coppeliaMLA/barb_api/tree/pyBARB_dev/python/pybarb)
-- [The getting started guide](http://www.coppelia.io/barb_api/python/pybarb/getting_started.html)
-- The code documentation
+- [The getting started guide](http://www.coppelia.io/barb_api/pybarb/getting_started.html)
+- [The code documentation]((http://www.coppelia.io/barb_api/pybarb/documentation.html))
+
+### Jupyter notebooks
+
+Examples of how to use pybarb for various usecases including
+
+- [A broadcaster example](jupyter_notebooks/a_broadcaster_example.ipynb)
+- [A media agency example](jupyter_notebooks/a_media_agency_example.ipynb)
+- [An example using audiences by time](jupyter_notebooks/an_audiences_by_time_example.ipynb)
+
+### A few extra resources
+
+- [Some geojson files for mapping tv regions](assets/tv_regions)
 
 #### Installing pybarb
 
