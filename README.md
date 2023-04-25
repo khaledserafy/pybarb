@@ -37,7 +37,7 @@ pybarb is a python package for interacting with the Barb API. It allows you to c
 
 ### Jupyter notebooks
 
-Examples of how to use pybarb for various usecases including
+Examples of how to use the Barb API for various usecases. *Note these were written before the development of pybarb. It's much easier now!*
 
 - [A broadcaster example](jupyter_notebooks/a_broadcaster_example.ipynb)
 - [A media agency example](jupyter_notebooks/a_media_agency_example.ipynb)
