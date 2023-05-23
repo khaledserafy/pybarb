@@ -1,4 +1,5 @@
-# barb_api
+# pybarb
+
 A python package for interacting with [BARB's web API](https://barb-api.co.uk/api-docs).
 
 ## About Barb
