@@ -24,3 +24,10 @@ pybarb/.vscode/
 pybarb/dist/
 
 pybarb/pybarb.egg-info/
+
+
+pybarb.egg-info/
+
+dist/
+
+build/

@@ -113,7 +113,9 @@ class BarbAPI:
 
         # The query parameters
         params = {"min_transmission_date": min_transmission_date, "max_transmission_date": max_transmission_date,
-                  "station_code": self.get_station_code(station), "panel_code": self.get_panel_code(panel), "consolidated": consolidated, "last_updated_greater_than": last_updated_greater_than, "use_reporting_days": use_reporting_days, "limit": limit}
+                  "station_code":  None if station is None else self.get_station_code(station),
+                  "panel_code":  None if panel is None else self.get_panel_code(panel),
+                  "consolidated": consolidated, "last_updated_greater_than": last_updated_greater_than, "use_reporting_days": use_reporting_days, "limit": limit}
 
         api_response_data = self.query_event_endpoint(
             "programme_ratings", params)
@@ -145,7 +147,8 @@ class BarbAPI:
 
         # The query parameters
         params = {"min_transmission_date": min_transmission_date, "max_transmission_date": max_transmission_date,
-                  "station_code": self.get_station_code(station), "panel_code": self.get_panel_code(panel),
+                  "station_code": None if station is None else self.get_station_code(station), 
+                  "panel_code": None if panel is None else self.get_panel_code(panel),
                   "advertiser": advertiser, "buyer": buyer, "consolidated": consolidated,
                   "standardise_audiences": standardise_audiences, "use_reporting_days": use_reporting_days, "last_updated_greater_than": last_updated_greater_than,
                   "limit": limit}
@@ -178,7 +181,8 @@ class BarbAPI:
 
         # The query parameters
         params = {"min_transmission_date": min_transmission_date, "max_transmission_date": max_transmission_date,
-                  "station_code": self.get_station_code(station), "panel_code": self.get_panel_code(panel),
+                  "station_code":  None if station is None else self.get_station_code(station),
+                  "panel_code":  None if panel is None else self.get_panel_code(panel),
                   "time_period_length": time_period_length, "viewing_status": viewing_status,
                   "use_polling_days": use_polling_days, "last_updated_greater_than": last_updated_greater_than,
                   "limit": limit}
@@ -209,9 +213,8 @@ class BarbAPI:
             x_next_url = r.headers["X-Next"]
             r = requests.get(url=x_next_url, headers=self.headers)
             r_json = r.json()
-            api_response_data["events"].append(r_json["events"])
-            api_response_data["audience_categories"].append(
-                r_json["audience_categories"])
+            api_response_data["events"] = api_response_data["events"] + r_json["events"]
+            api_response_data["audience_categories"] = api_response_data["audience_categories"]  + r_json["audience_categories"]
 
         return api_response_data
     
