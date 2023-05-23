@@ -26,6 +26,8 @@ There are additional endpoints for users to look up Stations, Panel numbers, Adv
 
 The data in the API are enriched with metadata from Barb and Clearcast on programmes and adverts.
 
+*Important:* As the licence states, code is provided 'as is'. It is the user's responsibility to check the code and the outputs.
+
 ## What's in this repository?
 
 ### pybarb
