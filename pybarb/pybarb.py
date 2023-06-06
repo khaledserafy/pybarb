@@ -410,7 +410,7 @@ class ProgrammeRatingsResultSet(APIResultSet):
         # Loop through the events and then the audiences within the events
         df = []
         for e in self.api_response_data['events']:
-            prog_name = e['programme_content']['content_name'] if 'programme_content' == "None" else e['transmission_log_programme_name'].title()
+            prog_name = e['programme_content']['content_name'] if e['programme_content'] is not None else e['transmission_log_programme_name'].title()
             for v in e['audience_views']:
                 df.append({'panel_region': e['panel']['panel_region'],
                            'station_name': e['station']['station_name'],
