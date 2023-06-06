@@ -1,0 +1,27 @@
+name: PyPI Update
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  pypi_update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+
+      - name: Install dependencies
+        run: pip install --upgrade setuptools wheel twine
+
+      - name: Build and upload to PyPI
+        run: |
+          python setup.py sdist bdist_wheel
+          python -m twine upload --skip-existing --non-interactive --username __token__ --password ${{ secrets.PYPI_API_TOKEN }} dist/*
