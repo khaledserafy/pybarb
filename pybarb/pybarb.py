@@ -24,7 +24,7 @@ class BarbAPI:
 
     """
 
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, api_root="https://barb-api.co.uk/api/v1/"):
         """
         Initializes a new instance of the BarbAPI class.
 
@@ -32,9 +32,10 @@ class BarbAPI:
             api_key (str): The API key for accessing the Barb API.
         """
         self.api_key = api_key
-        self.api_root = "https://barb-api.co.uk/api/v1/"
+        self.api_root = api_root
         self.connected = False
         self.headers = None
+        self.current_job_id = None
 
     def connect(self):
         """
@@ -277,6 +278,32 @@ class BarbAPI:
             list_of_buyers = list(filter(regex.search, list_of_buyers))
 
         return list_of_buyers
+    
+    def query_asynch_endpoint(self, endpoint, parameters):
+        api_url = f"{self.api_root}{endpoint}"
+
+        # Query the API and turn the response into json
+        r = requests.post(url=api_url, json=parameters, headers=self.headers)
+        r_json = r.json()
+        self.current_job_id = r_json['job_id']
+        return r_json
+    
+    def get_asynch_file_urls(self, job_id=None):
+
+        if job_id is None:
+            job_id = self.current_job_id
+        
+        api_url = f"{self.api_root}async-batch/result/{job_id}"
+        r = requests.get(url=api_url, headers=self.headers)
+        r_json = r.json()
+        if len(r_json['result']) == 0:
+            return r_json
+        urls = [x['data'] for x in r_json['result']]
+        return urls
+    
+    def get_asynch_file(self, url):
+        #r = requests.get(url=url, headers=self.headers)
+        return ViewingResultSet(pd.read_parquet(url))
 
 
 class APIResultSet:
@@ -538,4 +565,30 @@ class AudiencesByTimeResultSet(APIResultSet):
         audience_data = audience_data.merge(audience_categories_df, how="left", on="audience_code").drop("audience_code", axis=1)
 
         return audience_data
+    
+
+class ViewingResultSet(APIResultSet):
+
+    def to_dataframe(self):
+        df = self.api_response_data
+        bool_columns = ['TARGETED_PROMOTION', 'SKY_ULTRA_HD']
+        df[bool_columns] = df[bool_columns].astype(bool)
+
+        json_columns = [
+            'SESSION_START',
+            'SESSION_END',
+            'HOUSEHOLD',
+            'DEVICE',
+            'PANEL_VIEWERS',
+            'GUEST_VIEWERS',
+            'PROGRAMMES_VIEWED',
+            'SPOTS_VIEWED',
+            'PANEL',
+            'VIEWING_STATION',
+            'START_OF_RECORDING',
+            'VOD_PROVIDER']
+
+        for column in json_columns:
+            df[column] = df[column].apply(json.loads)
+        return df
 
