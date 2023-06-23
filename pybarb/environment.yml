@@ -17,3 +17,5 @@ dependencies:
   - pytest
   - jupyterlab>3.0.7
   - openpyxl
+  - fastparquet
+  - pyarrow
