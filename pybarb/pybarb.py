@@ -5,6 +5,7 @@ import numpy as np
 import sqlalchemy
 import plotly.graph_objs as go
 import re
+import time
 
 
 class BarbAPI:
@@ -71,6 +72,28 @@ class BarbAPI:
         else:
             raise Exception(f"Station name {station_name} not found.")
         return station_code
+    
+    def get_viewing_station_code(self, viewing_station_name):
+        """
+        Gets the station code for a given station name.
+        
+        Args:
+            station_name (str): The name of the station to query.
+        
+        Returns:
+            str: The station code.
+        """
+
+        api_url = f"{self.api_root}viewing_stations/"
+        r = requests.get(url=api_url, headers=self.headers)
+        api_data = r.json()
+        viewing_station_code = [s["viewing_station_code"]
+                        for s in api_data if viewing_station_name.lower() == s['viewing_station_name'].lower()]
+        if len(viewing_station_code) == 1:
+            viewing_station_code = viewing_station_code[0]
+        else:
+            raise Exception(f"Viewing station name {viewing_station_name} not found.")
+        return viewing_station_code
 
     def get_panel_code(self, panel_region):
         """
@@ -193,6 +216,39 @@ class BarbAPI:
 
         return AudiencesByTimeResultSet(api_response_data)
     
+    def viewing(self, min_session_date, max_session_date, viewing_station=None, panel=None, activity_type=None, last_updated_greater_than=None, output_format="parquet", limit=5000):
+        """
+        Gets the audiences by time for a given date range.
+
+            Args:
+                min_transmission_date (str): The minimum transmission date to query.
+                max_transmission_date (str): The maximum transmission date to query.
+                time_period_length (str): The time period length to query.
+                viewing_status (str): The viewing status to query.
+
+                station (str): The name of the station to query.
+                panel (str): The name of the panel to query.
+                use_polling_days (bool): Whether to use polling days.
+                last_updated_greater_than (str): The last updated date to query.
+                limit (int): The maximum number of results to return.
+
+            Returns:
+                AudiencesByTimeResultSet: The audiences by time result set.
+        """
+
+        # The query parameters
+        params = {"min_session_date": min_session_date, "max_session_date": max_session_date,
+                  "viewing_station_code":  None if viewing_station is None else self.get_viewing_station_code(viewing_station),
+                  "panel_code":  None if panel is None else self.get_panel_code(panel),
+                  #"activity_type": activity_type,
+                  #"last_updated_greater_than": last_updated_greater_than,
+                  "output_format": output_format,
+                  "limit": limit}
+
+        api_response_data = self.query_asynch_endpoint("async-batch/viewing/", parameters=params)
+
+        print(f"{api_response_data['message']} The job id is {api_response_data['job_id']}")
+    
     def query_event_endpoint(self, endpoint, parameters):
         """
         Queries the event endpoint.  
@@ -228,9 +284,31 @@ class BarbAPI:
         """
 
         api_url = f"{self.api_root}stations"
+
         api_response_data = requests.get(url=api_url, headers=self.headers)
 
         list_of_stations = [x['station_name'] for x in api_response_data.json()]
+
+        if regex_filter is not None:
+
+            regex = re.compile(regex_filter)
+            list_of_stations = list(filter(regex.search, list_of_stations))
+
+        return list_of_stations
+    
+    def list_viewing_stations(self, regex_filter=None):
+        """
+        Lists the stations available in the API.
+
+            Returns:
+                list: The stations result set.
+        """
+
+        api_url = f"{self.api_root}viewing_stations"
+
+        api_response_data = requests.get(url=api_url, headers=self.headers)
+
+        list_of_stations = [x['viewing_station_name'] for x in api_response_data.json()]
 
         if regex_filter is not None:
 
@@ -293,18 +371,34 @@ class BarbAPI:
         if job_id is None:
             job_id = self.current_job_id
         
-        api_url = f"{self.api_root}async-batch/result/{job_id}"
+        api_url = f"{self.api_root}async-batch/results/{job_id}"
         r = requests.get(url=api_url, headers=self.headers)
         r_json = r.json()
         if len(r_json['result']) == 0:
-            return r_json
+            return False
         urls = [x['data'] for x in r_json['result']]
         return urls
     
-    def get_asynch_file(self, url):
-        #r = requests.get(url=url, headers=self.headers)
-        return ViewingResultSet(pd.read_parquet(url))
+    def get_asynch_files(self):
 
+        results = pd.DataFrame()
+        for file in self.current_file_urls:
+            df = pd.read_parquet(file)
+            results = pd.concat([results, df])
+        return ViewingResultSet(results)
+
+    def ping_job_status(self, job_id=None):
+
+        if job_id is None:
+            job_id = self.current_job_id
+
+        while self.get_asynch_file_urls(job_id) is False:
+            print("Job not ready yet. Sleeping for 60 seconds.")
+            time.sleep(60)
+
+        self.current_file_urls = self.get_asynch_file_urls(job_id)
+
+        print(f"Job complete. {len(self.current_file_urls)} files are ready for download.")
 
 class APIResultSet:
     """
@@ -417,7 +511,6 @@ class APIResultSet:
 
         # display the chart
         return fig
-
 
 
 class ProgrammeRatingsResultSet(APIResultSet):
@@ -569,10 +662,16 @@ class AudiencesByTimeResultSet(APIResultSet):
 
 class ViewingResultSet(APIResultSet):
 
-    def to_dataframe(self):
-        df = self.api_response_data
+    def __init__(self, api_response_data):
+        """
+        Initialises a new instance of the APIResultSet class.
+
+        Args:
+            api_response_data (dict): The API response data.
+        """
+
         bool_columns = ['TARGETED_PROMOTION', 'SKY_ULTRA_HD']
-        df[bool_columns] = df[bool_columns].astype(bool)
+        api_response_data[bool_columns] = api_response_data[bool_columns].astype(bool)
 
         json_columns = [
             'SESSION_START',
@@ -589,6 +688,41 @@ class ViewingResultSet(APIResultSet):
             'VOD_PROVIDER']
 
         for column in json_columns:
-            df[column] = df[column].apply(json.loads)
+            api_response_data[column] = api_response_data[column].apply(json.loads)
+        
+        self.api_response_data = api_response_data
+
+    def to_dataframe(self, explode=None):
+        """
+        Converts the API response data into a pandas dataframe.
+
+        Returns:
+            pandas.DataFrame: A dataframe containing the API response data.
+
+        """
+
+        data_as_dict = self.api_response_data.to_dict(orient='records')
+        rows = []
+        for item in data_as_dict:
+            row = {}
+            row.update(item['HOUSEHOLD'])
+            row.update(item['DEVICE'])
+
+            for programme in item['PROGRAMMES_VIEWED']:
+                if 'programme_start_datetime' in programme.keys():
+                    for viewer in item['PANEL_VIEWERS']:
+                        inner_row = {}
+                        inner_row.update({'programme_start_datetime': programme['programme_start_datetime']['standard_datetime'],
+                                        'programme_name': programme['programme_content']['content_name'],})
+                        inner_row.update(viewer)
+                        inner_row.update(row)
+                        rows.append(inner_row)
+
+        # Drop all columns from df with datatype that is a dict
+
+        df = pd.DataFrame(rows)
+        df = df.drop(columns=["panel_member_weights", "tv_set_properties"]).drop_duplicates()
+
         return df
+
 
