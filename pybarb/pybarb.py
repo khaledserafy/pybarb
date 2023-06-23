@@ -10,20 +10,33 @@ import time
 
 class BarbAPI:
     """
-    A class for connecting to the Barb API and making queries.
+    Represents the Barb API.
 
     Attributes:
         api_key (str): The API key for accessing the Barb API.
-        connected (bool): Whether the API is currently connected.
-
+        api_root (str): The root URL of the Barb API.
+        connected (bool): Whether the Barb API is connected.
+        headers (dict): The headers for the Barb API.
+        current_job_id (str): The current job id for the Barb API.
+    
     Methods:
-        connect(): Connects to the Barb API.
-        programme_ratings(min_transmission_date, max_transmission_date, station=None, panel=None, consolidated=True, last_updated_greater_than=None, use_reporting_days=True, limit=5000): Gets the programme ratings for a given date range.
-        advertising_spots(min_transmission_date, max_transmission_date, station=None, panel=None, advertiser=None, buyer=None, consolidated=True, standardise_audiences=None, use_reporting_days=True, last_updated_greater_than=None, limit=5000): Gets the advertising spots for a given date range.
-        audiences_by_time(min_transmission_date, max_transmission_date, time_period_length, viewing_status, station=None, panel=None, use_polling_days=True, last_updated_greater_than=None, limit=5000): Gets the audiences by time for a given date range.
-        audiences_by_day(min_transmission_date, max_transmission_date, station=None, panel=None, use_polling_days=True, last_updated_greater_than=None, limit=5000): Gets the audiences by day for a given date range.
-
+        connect: Connects to the Barb API.
+        get_station_code: Gets the station code for a given station name.
+        get_viewing_station_code: Gets the station code for a given station name.
+        get_panel_code: Gets the panel code for a given panel region.
+        programme_ratings: Gets the programme ratings for a given date range.
+        advertising_spots: Gets the advertising spots for a given date range.
+        audiences_by_time: Gets the audiences by time for a given date range.
+        list_stations: Lists the stations available in the API.
+        list_viewing_stations: Lists the stations available in the API.
+        list_panels: Lists the panels available in the API.
+        list_buyers: Lists the buyers available in the API.
+        query_asynch_endpoint: Queries the asynch endpoint.
+        get_asynch_file_urls: Gets the asynch file urls.
+        get_asynch_files: Gets the asynch files.
+        ping_job_status: Pings the job status.
     """
+
 
     def __init__(self, api_key: str, api_root="https://barb-api.co.uk/api/v1/"):
         """
@@ -31,6 +44,8 @@ class BarbAPI:
 
         Args:
             api_key (str): The API key for accessing the Barb API.
+            api_root (str): The root URL of the Barb API.
+
         """
         self.api_key = api_key
         self.api_root = api_root
@@ -75,13 +90,13 @@ class BarbAPI:
     
     def get_viewing_station_code(self, viewing_station_name):
         """
-        Gets the station code for a given station name.
-        
+        Gets the viewing_station code for a given viewing_station name.
+
         Args:
-            station_name (str): The name of the station to query.
-        
+            viewing_station_name (str): The name of the viewing_station to query.
+
         Returns:
-            str: The station code.
+            str: The viewing_station code.
         """
 
         api_url = f"{self.api_root}viewing_stations/"
@@ -218,32 +233,34 @@ class BarbAPI:
     
     def viewing(self, min_session_date, max_session_date, viewing_station=None, panel=None, activity_type=None, last_updated_greater_than=None, output_format="parquet", limit=5000):
         """
-        Gets the audiences by time for a given date range.
+        Gets the viewing for a given date range.
 
             Args:
-                min_transmission_date (str): The minimum transmission date to query.
-                max_transmission_date (str): The maximum transmission date to query.
-                time_period_length (str): The time period length to query.
-                viewing_status (str): The viewing status to query.
-
-                station (str): The name of the station to query.
+                min_session_date (str): The minimum session date to query.
+                max_session_date (str): The maximum session date to query.
+                viewing_station (str): The name of the viewing_station to query.
                 panel (str): The name of the panel to query.
-                use_polling_days (bool): Whether to use polling days.
+                activity_type (str): The activity type to query.
                 last_updated_greater_than (str): The last updated date to query.
+                output_format (str): The output format to query.
                 limit (int): The maximum number of results to return.
 
             Returns:
-                AudiencesByTimeResultSet: The audiences by time result set.
+                ViewingResultSet: The viewing result set.
         """
 
         # The query parameters
         params = {"min_session_date": min_session_date, "max_session_date": max_session_date,
                   "viewing_station_code":  None if viewing_station is None else self.get_viewing_station_code(viewing_station),
                   "panel_code":  None if panel is None else self.get_panel_code(panel),
-                  #"activity_type": activity_type,
-                  #"last_updated_greater_than": last_updated_greater_than,
                   "output_format": output_format,
                   "limit": limit}
+        
+        if activity_type is not None:
+            params["activity_type"] = activity_type
+
+        if last_updated_greater_than is not None:
+            params["last_updated_greater_than"] = last_updated_greater_than
 
         api_response_data = self.query_asynch_endpoint("async-batch/viewing/", parameters=params)
 
@@ -358,6 +375,18 @@ class BarbAPI:
         return list_of_buyers
     
     def query_asynch_endpoint(self, endpoint, parameters):
+        """
+        Queries the asynch endpoint.
+
+            Args:
+                endpoint (str): The endpoint to query.
+                parameters (dict): The query parameters.
+
+            Returns:
+                dict: The API response data.
+        """ 
+
+
         api_url = f"{self.api_root}{endpoint}"
 
         # Query the API and turn the response into json
@@ -367,6 +396,16 @@ class BarbAPI:
         return r_json
     
     def get_asynch_file_urls(self, job_id=None):
+        """
+        Gets the asynch file urls.
+            
+            Args:
+                job_id (str): The job id to query.
+
+            Returns:
+                list: The asynch file urls.
+        """
+        
 
         if job_id is None:
             job_id = self.current_job_id
@@ -380,6 +419,13 @@ class BarbAPI:
         return urls
     
     def get_asynch_files(self):
+        """
+        Gets the asynch files.
+            
+            Returns:
+                ViewingResultSet: The viewing result set.
+        """
+        
 
         results = pd.DataFrame()
         for file in self.current_file_urls:
@@ -388,6 +434,15 @@ class BarbAPI:
         return ViewingResultSet(results)
 
     def ping_job_status(self, job_id=None):
+        """
+        Pings the job status.
+                
+            Args:
+                job_id (str): The job id to query.
+
+            Returns:
+                list: The asynch file urls.
+        """ 
 
         if job_id is None:
             job_id = self.current_job_id
@@ -399,6 +454,7 @@ class BarbAPI:
         self.current_file_urls = self.get_asynch_file_urls(job_id)
 
         print(f"Job complete. {len(self.current_file_urls)} files are ready for download.")
+        
 
 class APIResultSet:
     """
@@ -692,31 +748,35 @@ class ViewingResultSet(APIResultSet):
         
         self.api_response_data = api_response_data
 
-    def to_dataframe(self, explode=None):
+    def to_dataframe(self, unpack=None):
         """
         Converts the API response data into a pandas dataframe.
 
+        Args:
+            unpack (list): The columns to unpack
+            
         Returns:
             pandas.DataFrame: A dataframe containing the API response data.
-
         """
 
-        data_as_dict = self.api_response_data.to_dict(orient='records')
-        rows = []
-        for item in data_as_dict:
-            row = {}
-            row.update(item['HOUSEHOLD'])
-            row.update(item['DEVICE'])
+        if set(unpack) == set(["viewers", "programmes"]):
 
-            for programme in item['PROGRAMMES_VIEWED']:
-                if 'programme_start_datetime' in programme.keys():
-                    for viewer in item['PANEL_VIEWERS']:
-                        inner_row = {}
-                        inner_row.update({'programme_start_datetime': programme['programme_start_datetime']['standard_datetime'],
-                                        'programme_name': programme['programme_content']['content_name'],})
-                        inner_row.update(viewer)
-                        inner_row.update(row)
-                        rows.append(inner_row)
+            data_as_dict = self.api_response_data.to_dict(orient='records')
+            rows = []
+            for item in data_as_dict:
+                row = {}
+                row.update(item['HOUSEHOLD'])
+                row.update(item['DEVICE'])
+
+                for programme in item['PROGRAMMES_VIEWED']:
+                    if 'programme_start_datetime' in programme.keys():
+                        for viewer in item['PANEL_VIEWERS']:
+                            inner_row = {}
+                            inner_row.update({'programme_start_datetime': programme['programme_start_datetime']['standard_datetime'],
+                                            'programme_name': programme['programme_content']['content_name'],})
+                            inner_row.update(viewer)
+                            inner_row.update(row)
+                            rows.append(inner_row)
 
         # Drop all columns from df with datatype that is a dict
 
