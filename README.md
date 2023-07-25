@@ -36,6 +36,7 @@ pybarb is a python package for interacting with the Barb API. It allows you to c
 
 - [The package code](https://github.com/coppeliaMLA/pybarb/tree/main/pybarb)
 - [The getting started guide](http://www.coppelia.io/pybarb/pybarb/getting_started.html)
+- [The getting started guide - jupyter notebook version](https://github.com/coppeliaMLA/pybarb/blob/main/pybarb/getting_started.ipynb)
 
 ### Jupyter notebooks
 
