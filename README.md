@@ -34,7 +34,7 @@ The data in the API are enriched with metadata from Barb and Clearcast on progra
 
 pybarb is a python package for interacting with the Barb API. It allows you to connect to an API endpoint, query it, and convert the results into a number of formats including pandas dataframes and csv, excel and json files. It also allows you to write the results to a database using SQLAlchemy. 
 
-- [The package code](https://github.com/coppeliaMLA/barb_api/tree/pyBARB_dev/python/pybarb)
+- [The package code](https://github.com/coppeliaMLA/pybarb/tree/main/pybarb)
 - [The getting started guide](http://www.coppelia.io/pybarb/pybarb/getting_started.html)
 
 ### Jupyter notebooks
