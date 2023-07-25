@@ -413,7 +413,7 @@ class BarbAPI:
         api_url = f"{self.api_root}async-batch/results/{job_id}"
         r = requests.get(url=api_url, headers=self.headers)
         r_json = r.json()
-        if len(r_json['result']) == 0:
+        if r_json['status'] == 'started':
             return False
         urls = [x['data'] for x in r_json['result']]
         return urls
@@ -784,5 +784,15 @@ class ViewingResultSet(APIResultSet):
         df = df.drop(columns=["panel_member_weights", "tv_set_properties"]).drop_duplicates()
 
         return df
+    
+    def to_json(self, file_name):
+        """
+        Converts the API response data into a json object.
+
+        Returns:
+            json: A json containing the API response data.
+        """
+
+        self.api_response_data.to_json(file_name, orient='records')
 
 
