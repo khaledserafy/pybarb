@@ -374,6 +374,26 @@ class BarbAPI:
 
         return list_of_buyers
     
+    def list_advertisers(self, regex_filter=None):
+        """
+        Lists the advertisers available in the API.
+
+            Returns:
+                list: The advertisers result set.
+        """
+
+        api_url = f"{self.api_root}advertiers"
+        api_response_data = requests.get(url=api_url, headers=self.headers)
+
+        list_of_advertisers = api_response_data.json()
+
+        if regex_filter is not None:
+
+            regex = re.compile(regex_filter)
+            list_of_buyers = list(filter(regex.search, list_of_advertisers))
+
+        return list_of_advertisers
+
     def query_asynch_endpoint(self, endpoint, parameters):
         """
         Queries the asynch endpoint.
