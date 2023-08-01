@@ -131,7 +131,7 @@ class BarbAPI:
         else:
             raise Exception(f"Panel name {panel_region} not found.")
         return panel_code
-
+    
     def programme_ratings(self, min_transmission_date, max_transmission_date, station=None, panel=None, consolidated=True, last_updated_greater_than=None, use_reporting_days=True, limit=5000):
         """
         Gets the programme ratings for a given date range.
