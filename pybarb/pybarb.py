@@ -188,7 +188,7 @@ class BarbAPI:
         params = {"min_transmission_date": min_transmission_date, "max_transmission_date": max_transmission_date,
                   "station_code": None if station is None else self.get_station_code(station), 
                   "panel_code": None if panel is None else self.get_panel_code(panel),
-                  "advertiser": advertiser, "buyer": buyer, "consolidated": consolidated,
+                  "advertiser_name": advertiser, "buyer_name": buyer, "consolidated": consolidated,
                   "standardise_audiences": standardise_audiences, "use_reporting_days": use_reporting_days, "last_updated_greater_than": last_updated_greater_than,
                   "limit": limit}
 
@@ -280,7 +280,7 @@ class BarbAPI:
         api_url = f"{self.api_root}{endpoint}"
         r = requests.get(url=api_url, params=parameters, headers=self.headers)
         r_json = r.json()
-        api_response_data = {"endpoint": "programme_ratings",
+        api_response_data = {"endpoint": endpoint,
                              "events": r_json["events"],
                              "audience_categories": r_json["audience_categories"]}
         while r.headers.__contains__("X-Next"):
@@ -308,7 +308,7 @@ class BarbAPI:
 
         if regex_filter is not None:
 
-            regex = re.compile(regex_filter)
+            regex = re.compile(regex_filter, flags=re.IGNORECASE)
             list_of_stations = list(filter(regex.search, list_of_stations))
 
         return list_of_stations
@@ -329,7 +329,7 @@ class BarbAPI:
 
         if regex_filter is not None:
 
-            regex = re.compile(regex_filter)
+            regex = re.compile(regex_filter, flags=re.IGNORECASE)
             list_of_stations = list(filter(regex.search, list_of_stations))
 
         return list_of_stations
@@ -349,7 +349,7 @@ class BarbAPI:
 
         if regex_filter is not None:
 
-            regex = re.compile(regex_filter)
+            regex = re.compile(regex_filter, flags=re.IGNORECASE)
             list_of_panels = list(filter(regex.search, list_of_panels))
 
         return list_of_panels
@@ -369,11 +369,31 @@ class BarbAPI:
 
         if regex_filter is not None:
 
-            regex = re.compile(regex_filter)
+            regex = re.compile(regex_filter, flags=re.IGNORECASE)
             list_of_buyers = list(filter(regex.search, list_of_buyers))
 
         return list_of_buyers
     
+    def list_advertisers(self, regex_filter=None):
+        """
+        Lists the advertisers available in the API.
+
+            Returns:
+                list: The advertisers result set.
+        """
+
+        api_url = f"{self.api_root}advertisers"
+        api_response_data = requests.get(url=api_url, headers=self.headers)
+
+        list_of_advertisers = [a['advertiser_name'] for a in api_response_data.json()]
+
+        if regex_filter is not None:
+
+            regex = re.compile(regex_filter, flags=re.IGNORECASE)
+            list_of_advertisers = list(filter(regex.search, list_of_advertisers))
+
+        return list_of_advertisers
+
     def query_asynch_endpoint(self, endpoint, parameters):
         """
         Queries the asynch endpoint.
