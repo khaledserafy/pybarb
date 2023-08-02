@@ -188,7 +188,7 @@ class BarbAPI:
         params = {"min_transmission_date": min_transmission_date, "max_transmission_date": max_transmission_date,
                   "station_code": None if station is None else self.get_station_code(station), 
                   "panel_code": None if panel is None else self.get_panel_code(panel),
-                  "advertiser": advertiser, "buyer": buyer, "consolidated": consolidated,
+                  "advertiser_name": advertiser, "buyer_name": buyer, "consolidated": consolidated,
                   "standardise_audiences": standardise_audiences, "use_reporting_days": use_reporting_days, "last_updated_greater_than": last_updated_greater_than,
                   "limit": limit}
 
