@@ -618,9 +618,9 @@ class ProgrammeRatingsResultSet(APIResultSet):
                            'uk_premiere': e['uk_premier'],
                            'broadcaster_premiere': e['broadcaster_premier'],
                            'programme_repeat': e['repeat'],
-                           'episode_number': e['episode']['episode_number'] if 'episode' in e else None,
-                           'episode_name': e['episode']['episode_name'] if 'episode' in e else None,
-                           'genre': e['genre'] if 'genre' in e else None,
+                           'episode_number': e['programme_content']['episode']['episode_number'] if 'episode' in e['programme_content'].keys() else None,
+                           'episode_name': e['programme_content']['episode']['episode_name'] if 'episode' in e['programme_content'].keys() else None,
+                           'genre': e['programme_content']['genre'] if 'genre' in e['programme_content'].keys() else None,
                            'audience_code': v['audience_code'],
                            'audience_size_hundreds': v['audience_size_hundreds']})
         # Convert the result into a data frame
