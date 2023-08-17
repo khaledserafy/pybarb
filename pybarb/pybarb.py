@@ -606,7 +606,20 @@ class ProgrammeRatingsResultSet(APIResultSet):
         # Loop through the events and then the audiences within the events
         df = []
         for e in self.api_response_data['events']:
-            prog_name = e['programme_content']['content_name'] if e['programme_content'] is not None else e['transmission_log_programme_name'].title()
+
+            # Handle the possibility of a null programme_content
+            prog_name =  e['transmission_log_programme_name'].title()
+            episode_name = None
+            episode_number = None
+            genre = None
+            if e['programme_content'] is not None
+                prog_name = e['programme_content']['programme_name'].title()
+                if 'episode' in e['programme_content'].keys():
+                    episode_name = e['programme_content']['episode']['episode_name']
+                    episode_number = e['programme_content']['episode']['episode_number']
+                if 'genre' in e['programme_content'].keys():
+                    genre = e['programme_content']['genre']
+
             for v in e['audience_views']:
                 df.append({'panel_region': e['panel']['panel_region'],
                            'station_name': e['station']['station_name'],
@@ -618,9 +631,9 @@ class ProgrammeRatingsResultSet(APIResultSet):
                            'uk_premiere': e['uk_premier'],
                            'broadcaster_premiere': e['broadcaster_premier'],
                            'programme_repeat': e['repeat'],
-                           'episode_number': e['programme_content']['episode']['episode_number'] if 'episode' in e['programme_content'].keys() else None,
-                           'episode_name': e['programme_content']['episode']['episode_name'] if 'episode' in e['programme_content'].keys() else None,
-                           'genre': e['programme_content']['genre'] if 'genre' in e['programme_content'].keys() else None,
+                           'episode_number': episode_number,
+                           'episode_name': episode_name,
+                           'genre': genre,
                            'audience_code': v['audience_code'],
                            'audience_size_hundreds': v['audience_size_hundreds']})
         # Convert the result into a data frame
