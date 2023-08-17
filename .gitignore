@@ -31,3 +31,5 @@ pybarb.egg-info/
 dist/
 
 build/
+
+.vscode/

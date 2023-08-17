@@ -131,7 +131,7 @@ class BarbAPI:
         else:
             raise Exception(f"Panel name {panel_region} not found.")
         return panel_code
-
+    
     def programme_ratings(self, min_transmission_date, max_transmission_date, station=None, panel=None, consolidated=True, last_updated_greater_than=None, use_reporting_days=True, limit=5000):
         """
         Gets the programme ratings for a given date range.
@@ -280,7 +280,7 @@ class BarbAPI:
         api_url = f"{self.api_root}{endpoint}"
         r = requests.get(url=api_url, params=parameters, headers=self.headers)
         r_json = r.json()
-        api_response_data = {"endpoint": "programme_ratings",
+        api_response_data = {"endpoint": endpoint,
                              "events": r_json["events"],
                              "audience_categories": r_json["audience_categories"]}
         while r.headers.__contains__("X-Next"):
@@ -308,7 +308,7 @@ class BarbAPI:
 
         if regex_filter is not None:
 
-            regex = re.compile(regex_filter)
+            regex = re.compile(regex_filter, flags=re.IGNORECASE)
             list_of_stations = list(filter(regex.search, list_of_stations))
 
         return list_of_stations
@@ -329,7 +329,7 @@ class BarbAPI:
 
         if regex_filter is not None:
 
-            regex = re.compile(regex_filter)
+            regex = re.compile(regex_filter, flags=re.IGNORECASE)
             list_of_stations = list(filter(regex.search, list_of_stations))
 
         return list_of_stations
@@ -349,7 +349,7 @@ class BarbAPI:
 
         if regex_filter is not None:
 
-            regex = re.compile(regex_filter)
+            regex = re.compile(regex_filter, flags=re.IGNORECASE)
             list_of_panels = list(filter(regex.search, list_of_panels))
 
         return list_of_panels
@@ -369,7 +369,7 @@ class BarbAPI:
 
         if regex_filter is not None:
 
-            regex = re.compile(regex_filter)
+            regex = re.compile(regex_filter, flags=re.IGNORECASE)
             list_of_buyers = list(filter(regex.search, list_of_buyers))
 
         return list_of_buyers
@@ -382,15 +382,15 @@ class BarbAPI:
                 list: The advertisers result set.
         """
 
-        api_url = f"{self.api_root}advertiers"
+        api_url = f"{self.api_root}advertisers"
         api_response_data = requests.get(url=api_url, headers=self.headers)
 
-        list_of_advertisers = api_response_data.json()
+        list_of_advertisers = [a['advertiser_name'] for a in api_response_data.json()]
 
         if regex_filter is not None:
 
-            regex = re.compile(regex_filter)
-            list_of_buyers = list(filter(regex.search, list_of_advertisers))
+            regex = re.compile(regex_filter, flags=re.IGNORECASE)
+            list_of_advertisers = list(filter(regex.search, list_of_advertisers))
 
         return list_of_advertisers
 
