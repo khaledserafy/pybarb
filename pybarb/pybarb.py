@@ -613,7 +613,7 @@ class ProgrammeRatingsResultSet(APIResultSet):
             episode_number = None
             genre = None
             if e['programme_content'] is not None:
-                prog_name = e['programme_content']['programme_name'].title()
+                prog_name = e['programme_content']['content_name']
                 if 'episode' in e['programme_content'].keys():
                     episode_name = e['programme_content']['episode']['episode_name']
                     episode_number = e['programme_content']['episode']['episode_number']
