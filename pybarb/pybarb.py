@@ -529,17 +529,18 @@ class APIResultSet:
         with open(file_name, 'w') as f:
             json.dump(self.api_response_data, f)
 
-    def to_sql(self, connection_string, table_name):
+    def to_sql(self, connection_string, table_name, if_exists='replace'):
         """
         Saves the API response data as a SQL table.
 
         Args:
             connection_string (str): The connection string to the SQL database.
             table_name (str): The name of the SQL table to save.
+            if_exists (str): The action to take if the SQL table already exists.
         """
         df = self.to_dataframe()
         engine = sqlalchemy.create_engine(connection_string)
-        df.to_sql(table_name, engine, if_exists='replace', index=False)
+        df.to_sql(table_name, engine, if_exists=if_exists, index=False)
 
     def audience_pivot(self):
         """
@@ -802,19 +803,27 @@ class ViewingResultSet(APIResultSet):
                 row.update(item['DEVICE'])
 
                 for programme in item['PROGRAMMES_VIEWED']:
-                    if 'programme_start_datetime' in programme.keys():
-                        for viewer in item['PANEL_VIEWERS']:
-                            inner_row = {}
-                            inner_row.update({'programme_start_datetime': programme['programme_start_datetime']['standard_datetime'],
-                                            'programme_name': programme['programme_content']['content_name'],})
-                            inner_row.update(viewer)
-                            inner_row.update(row)
-                            rows.append(inner_row)
+                    
+                    for viewer in item['PANEL_VIEWERS']:
+                        inner_row = {}
+                        inner_row.update({'session_start_datetime':item['SESSION_START']['standard_datetime']})
+                        if 'programme_start_datetime' in programme.keys():
+                            inner_row.update({'programme_start_datetime': programme['programme_start_datetime']['standard_datetime']})
+                        inner_row.update({'programme_name': programme['programme_content']['content_name']})
+                        inner_row.update(viewer)
+                        inner_row.update(row)
+                        rows.append(inner_row)
 
         # Drop all columns from df with datatype that is a dict
 
         df = pd.DataFrame(rows)
-        df = df.drop(columns=["panel_member_weights", "tv_set_properties"]).drop_duplicates()
+
+        # If it exists, drop the column tv_set_properties
+        for column in ["tv_set_properties", "panel_member_weights"]:
+            if column in df.columns:
+                df = df.drop(columns=[column])
+
+        df = df.drop_duplicates()
 
         return df
     
@@ -827,5 +836,3 @@ class ViewingResultSet(APIResultSet):
         """
 
         self.api_response_data.to_json(file_name, orient='records')
-
-
