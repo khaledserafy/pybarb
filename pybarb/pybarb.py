@@ -836,5 +836,3 @@ class ViewingResultSet(APIResultSet):
         """
 
         self.api_response_data.to_json(file_name, orient='records')
-
-
