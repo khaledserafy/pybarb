@@ -65,7 +65,7 @@ pybarb is a python package for interacting with the Barb API. It allows you to c
 
 This repository also contains a number of jupyter notebooks that demonstrate how to use python and R to interact with the Barb API. 
 
-- [Connecting to the Barb API using python](jupyter_notebooks/connecting_to_the_barb_api_using_python.ipynb.ipynb)
+- [Connecting to the Barb API using python](jupyter_notebooks/connecting_to_the_barb_api_using_python.ipynb)
 - [Connecting to the Barb API using R](jupyter_notebooks/connecting_to_the_barb_api_using_R.ipynb)
 - [Querying the Barb API using python](jupyter_notebooks/querying_the_barb_api_using_python.ipynb)
 - [Querying the Barb API using R](jupyter_notebooks/querying_the_barb_api_using_R.ipynb)
