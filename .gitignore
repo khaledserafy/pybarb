@@ -33,3 +33,5 @@ dist/
 build/
 
 .vscode/
+
+jupyter_notebooks/archive/
