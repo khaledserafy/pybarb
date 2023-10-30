@@ -35,3 +35,5 @@ build/
 .vscode/
 
 jupyter_notebooks/archive/
+
+jupyter_notebooks/debugs/
