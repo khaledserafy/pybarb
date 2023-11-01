@@ -2,9 +2,6 @@
 
 A python package for interacting with [BARB's web API](https://barb-api.co.uk/api-docs).
 
-**NOTICE: An update to the BARB api that has not yet been accounted for in pybarb has meant that the `advertising_spots`, `programme_ratings` and `audiences_by_time` endpoints are not working in pybarb. We are aiming to fix this before 3rd Nov, 23.**
-
-
 ## About Barb
 
 Barb is the industry’s standard for understanding what people watch.
