@@ -558,7 +558,7 @@ class BarbAPI:
                 return False
             urls = [x["data"] for x in r_json["result"]]
             if len(urls) == 0:
-                raise Exception(f"Error: No files returned.")
+                raise Exception(f"Error: No urls returned.")
             return urls
         except requests.exceptions.RequestException as e:
             print(f"An error occurred: {e}")
