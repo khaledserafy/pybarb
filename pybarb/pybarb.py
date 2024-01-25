@@ -1,12 +1,15 @@
-import requests
-import json
-import pandas as pd
-import numpy as np
-import sqlalchemy
-import plotly.graph_objs as go
+"""modules to import"""
 import re
+import os
 import time
+import tempfile
+import json
+import requests
+import pandas as pd
+from helpers.secret_manager import GcpSecretManager
+from google.cloud import storage
 
+storage_client= storage.Client(project=os.getenv("PROJECT"))
 
 class BarbAPI:
     """
@@ -26,6 +29,7 @@ class BarbAPI:
         get_panel_code: Gets the panel code for a given panel region.
         programme_ratings: Gets the programme ratings for a given date range.
         advertising_spots: Gets the advertising spots for a given date range.
+        spot_audience: gets the spot audience report data by day and panel
         audiences_by_time: Gets the audiences by time for a given date range.
         list_stations: Lists the stations available in the API.
         list_viewing_stations: Lists the stations available in the API.
@@ -37,19 +41,19 @@ class BarbAPI:
         ping_job_status: Pings the job status.
     """
 
-    def __init__(self, api_key: str, api_root="https://barb-api.co.uk/api/v1/"):
+    def __init__(self, api_root:str="https://barb-api.co.uk/api/v1/"):
         """
         Initializes a new instance of the BarbAPI class.
 
         Args:
-            api_key (str): The API key for accessing the Barb API.
+            api_key (dict): contains "email" and "password".
             api_root (str): The root URL of the Barb API.
 
         """
-        self.api_key = api_key
         self.api_root = api_root
         self.connected = False
-        self.headers = None
+        self.headers = {}
+        self.headers["Authorization"]=self.connect()
         self.current_job_id = None
 
     def connect(self):
@@ -60,15 +64,28 @@ class BarbAPI:
         try:
             # Code to connect to the Barb API
             self.connected = True
-
-            # Code to connect to the Barb API
-            self.connected = True
+            #get secrets
+            if os.getenv("ENV"):
+                email = os.getenv("EMAIL")
+                password = os.getenv("PASSWORD")
+            else:
+                secret_manager = GcpSecretManager()
+                email = secret_manager.get_secret("barb_email")
+                password = secret_manager.get_secret("barb_password")
 
             # Code to get an access token from the Barb API
             token_request_url = self.api_root + "auth/token/"
-            response = requests.post(token_request_url, data=self.api_key)
+            response = requests.post(
+                token_request_url
+                , data={
+                    "email":email,
+                    "password":password
+                }
+                ,timeout = 300
+            )
+            print(response.text)
             access_token = json.loads(response.text)["access"]
-            self.headers = {"Authorization": "Bearer {}".format(access_token)}
+            return f"Bearer {access_token}"
 
         except requests.exceptions.RequestException as e:
             print(f"An error occurred: {e}")
@@ -80,32 +97,7 @@ class BarbAPI:
             print("Failed to get access token from the response.")
             self.connected = False
 
-    def get_station_code(self, station_name):
-        """
-        Gets the station code for a given station name.
-
-        Args:
-            station_name (str): The name of the station to query.
-
-        Returns:
-            str: The station code.
-        """
-
-        api_url = f"{self.api_root}stations/"
-        r = requests.get(url=api_url, headers=self.headers)
-        api_data = r.json()
-        station_code = [
-            s["station_code"]
-            for s in api_data
-            if station_name.lower() == s["station_name"].lower()
-        ]
-        if len(station_code) == 1:
-            station_code = station_code[0]
-        else:
-            raise Exception(f"Station name {station_name} not found.")
-        return station_code
-
-    def get_viewing_station_code(self, viewing_station_name):
+    def get_viewing_station_code(self, viewing_station_name:str) ->dict:
         """
         Gets the viewing_station code for a given viewing_station name.
 
@@ -117,7 +109,12 @@ class BarbAPI:
         """
 
         api_url = f"{self.api_root}viewing_stations/"
-        r = requests.get(url=api_url, headers=self.headers)
+        r = requests.get(
+            url=api_url
+            , headers=self.headers
+            ,timeout=300
+        )
+        r.raise_for_status()
         api_data = r.json()
         viewing_station_code = [
             s["viewing_station_code"]
@@ -127,40 +124,15 @@ class BarbAPI:
         if len(viewing_station_code) == 1:
             viewing_station_code = viewing_station_code[0]
         else:
-            raise Exception(f"Viewing station name {viewing_station_name} not found.")
+            raise KeyError(f"Viewing station name {viewing_station_name} not found.")
         return viewing_station_code
-
-    def get_panel_code(self, panel_region):
-        """
-        Gets the panel code for a given panel region.
-
-        Args:
-            panel_region (str): The name of the panel to query.
-
-        Returns:
-            str: The panel code.
-        """
-
-        api_url = f"{self.api_root}panels/"
-        r = requests.get(url=api_url, headers=self.headers)
-        api_data = r.json()
-        panel_code = [
-            s["panel_code"]
-            for s in api_data
-            if panel_region.lower() == s["panel_region"].lower()
-        ]
-        if len(panel_code) == 1:
-            panel_code = panel_code[0]
-        else:
-            raise Exception(f"Panel name {panel_region} not found.")
-        return panel_code
 
     def programme_ratings(
         self,
-        min_transmission_date,
-        max_transmission_date,
-        station=None,
-        panel=None,
+        min_date,
+        max_date,
+        station_code:str,
+        panel_code=None,
         consolidated=True,
         last_updated_greater_than=None,
         use_reporting_days=True,
@@ -185,10 +157,10 @@ class BarbAPI:
 
         # The query parameters
         params = {
-            "min_transmission_date": min_transmission_date,
-            "max_transmission_date": max_transmission_date,
-            "station_code": None if station is None else self.get_station_code(station),
-            "panel_code": None if panel is None else self.get_panel_code(panel),
+            "min_transmission_date": min_date,
+            "max_transmission_date": max_date,
+            "station_code": station_code,
+            "panel_code": panel_code,
             "consolidated": consolidated,
             "last_updated_greater_than": last_updated_greater_than,
             "use_reporting_days": use_reporting_days,
@@ -199,12 +171,82 @@ class BarbAPI:
 
         return ProgrammeRatingsResultSet(api_response_data)
 
+    def programme_schedule(
+        self,
+        min_date:str,
+        max_date:str,
+        station_code:str,
+        last_updated_greater_than:str=None,
+    ):
+        """
+        Gets the programme ratings for a given date range.
+
+            Args:
+                min_scheduled_date (str): The minimum scheduled date to query.
+                max_scheduled_date (str): The maximum scheduled date to query.
+                station (str): The name of the station to query.
+                last_updated_greater_than (str): The last updated date to query.
+
+            Returns:
+                ProgrammeScheduleResultSet: The programme ratings result set.
+        """
+
+        # The query parameters
+        params = {
+            "min_scheduled_date": min_date,
+            "max_scheduled_date": max_date,
+            "station_code": station_code,
+            "last_updated_greater_than": last_updated_greater_than,
+        }
+
+        api_response_data = self.query_bulk_endpoint("programme_schedule", params)
+
+        return ProgrammeScheduleResultSet(api_response_data)
+
+    def programme_audience(
+        self,
+        min_date,
+        max_date,
+        panel_code:int,
+    ):
+        """
+        Gets the programme audience for a given date range.
+
+            Args:
+                min_sesssion_date (str): The minimum transmission date to query.
+                max_sesssion_date (str): The maximum transmission date to query.
+                panel_code (str): The panel code to query.
+
+            Returns:
+                ProgrammeAudienceResultSet: The programme audience result set.
+        """
+
+        # The query parameters
+        params = {
+            "min_session_date": min_date,
+            "max_session_date": max_date,
+            "panel_code": panel_code,
+        }
+
+        api_response_data = self.query_bulk_endpoint(
+            endpoint="bulk/programme_audience",
+            parameters=params,
+            method="GET"
+        )
+        if api_response_data is None:
+            string=f"no data recieved for {panel_code} for {min_date} and {max_date}"
+            print(string)
+            # raise Warning(string)
+            return None
+
+        return GoogleBucketResultSet(api_response_data, endpoint="programme_audience")
+
     def advertising_spots(
         self,
-        min_transmission_date,
-        max_transmission_date,
-        station=None,
-        panel=None,
+        min_transmission_date:str,
+        max_transmission_date:str,
+        station_code=None,
+        panel_code=None,
         advertiser=None,
         buyer=None,
         consolidated=True,
@@ -219,8 +261,8 @@ class BarbAPI:
             Args:
                 min_transmission_date (str): The minimum transmission date to query.
                 max_transmission_date (str): The maximum transmission date to query.
-                station (str): The name of the station to query.
-                panel (str): The name of the panel to query.
+                station_code (str): The code of the station to query.
+                panel_code (str): The code of the panel to query.
                 advertiser (str): The name of the advertiser to query.
                 buyer (str): The name of the buyer to query.
                 consolidated (bool): Whether to return consolidated data.
@@ -237,8 +279,8 @@ class BarbAPI:
         params = {
             "min_transmission_date": min_transmission_date,
             "max_transmission_date": max_transmission_date,
-            "station_code": None if station is None else self.get_station_code(station),
-            "panel_code": None if panel is None else self.get_panel_code(panel),
+            "station_code": station_code,
+            "panel_code":panel_code,
             "advertiser_name": advertiser,
             "buyer_name": buyer,
             "consolidated": consolidated,
@@ -247,10 +289,64 @@ class BarbAPI:
             "last_updated_greater_than": last_updated_greater_than,
             "limit": limit,
         }
-
         api_response_data = self.query_event_endpoint("advertising_spots", params)
 
         return AdvertisingSpotsResultSet(api_response_data)
+
+    def spot_audience(self,
+        min_date:str,
+        max_date:str,
+        panel_code):
+        """
+        Gets the advertising spots for a given date range.
+
+            Args:
+                min_transmission_date (str): The minimum transmission date to query.
+                max_transmission_date (str): The maximum transmission date to query.
+                panel_code (str): The code of the panel to query.
+
+            Returns:
+                SpotAudienceResultSet: The advertising spots result set.
+        """
+
+        # The query parameters
+        params = {
+            "min_session_date": min_date,
+            "max_session_date": max_date,
+            "panel_code":panel_code,
+        }
+
+        api_response_data = self.query_bulk_endpoint(
+            endpoint="bulk/spot_audience",
+            parameters=params,
+            method="GET"
+        )
+        print("api_response_data", api_response_data)
+
+        if api_response_data is None:
+            string=f"no data recieved for {panel_code} for {min_date} and {max_date}"
+            #raise Warning(string)
+            return None
+        return GoogleBucketResultSet(api_response_data,endpoint="spot_audience")
+
+    def spot_schedule(self
+                      ,min_date:str
+                      ,max_date:str
+                      ,station_code:int
+                      ,last_updated_gt:str=None):
+        """
+        request the spot schedule endpoint
+        """
+        # The query parameters
+        params = {
+            "min_scheduled_date": min_date,
+            "max_scheduled_date": max_date,
+            "station_code": station_code,
+        }
+        if last_updated_gt:
+            params["last_updated_greater_than"]= last_updated_gt
+        api_response_data = self.query_bulk_endpoint("spot_schedule", params)
+        return SpotScheduleResultSet(api_response_data)
 
     def audiences_by_time(
         self,
@@ -258,8 +354,8 @@ class BarbAPI:
         max_transmission_date,
         time_period_length,
         viewing_status,
-        station=None,
-        panel=None,
+        station_code=None,
+        panel_code=None,
         use_polling_days=True,
         last_updated_greater_than=None,
         limit=5000,
@@ -287,8 +383,8 @@ class BarbAPI:
         params = {
             "min_transmission_date": min_transmission_date,
             "max_transmission_date": max_transmission_date,
-            "station_code": None if station is None else self.get_station_code(station),
-            "panel_code": None if panel is None else self.get_panel_code(panel),
+            "station_code": station_code,
+            "panel_code": panel_code,
             "time_period_length": time_period_length,
             "viewing_status": viewing_status,
             "use_polling_days": use_polling_days,
@@ -302,21 +398,21 @@ class BarbAPI:
 
     def viewing(
         self,
-        min_session_date,
-        max_session_date,
-        viewing_station=None,
-        panel=None,
-        activity_type=None,
-        last_updated_greater_than=None,
-        output_format="parquet",
-        limit=5000,
+        min_date:str,
+        max_date:str,
+        panel_code:str,
+        #viewing_station=None,
+        #activity_type=None,
+        #last_updated_greater_than=None,
+        #output_format="parquet",
+        #limit=5000,
     ):
         """
         Gets the viewing for a given date range.
 
             Args:
-                min_session_date (str): The minimum session date to query.
-                max_session_date (str): The maximum session date to query.
+                min_date (str): The minimum session date to query.
+                max_date (str): The maximum session date to query.
                 viewing_station (str): The name of the viewing_station to query.
                 panel (str): The name of the panel to query.
                 activity_type (str): The activity type to query.
@@ -330,31 +426,37 @@ class BarbAPI:
 
         # The query parameters
         params = {
-            "min_session_date": min_session_date,
-            "max_session_date": max_session_date,
-            "viewing_station_code": None
-            if viewing_station is None
-            else self.get_viewing_station_code(viewing_station),
-            "panel_code": None if panel is None else self.get_panel_code(panel),
-            "output_format": output_format,
-            "limit": limit,
+            "min_session_date": min_date,
+            "max_session_date": max_date,
+            "panel_code": panel_code,
+            # "viewing_station_code": None
+            # if viewing_station is None
+            # else self.get_viewing_station_code(viewing_station),
+            # "output_format": output_format,
+            # "limit": limit,
         }
 
-        if activity_type is not None:
-            params["activity_type"] = activity_type
+        # if activity_type is not None:
+        #     params["activity_type"] = activity_type
 
-        if last_updated_greater_than is not None:
-            params["last_updated_greater_than"] = last_updated_greater_than
+        # if last_updated_greater_than is not None:
+        #     params["last_updated_greater_than"] = last_updated_greater_than
 
-        api_response_data = self.query_asynch_endpoint(
-            "async-batch/viewing/", parameters=params
+        api_response_data = self.query_bulk_endpoint(
+            endpoint="bulk/viewing/",
+            parameters=params,
+            method="GET"
         )
+        if api_response_data is None:
+            string=f"no data recieved for {panel_code} for {min_date} and {max_date}"
+            if os.getenv("ENV"):
+                print(string)
+            else:
+                raise Warning(string)
+            return None
+        return GoogleBucketResultSet(api_response_data,endpoint="viewing")
 
-        print(
-            f"{api_response_data['message']} The job id is {api_response_data['job_id']}"
-        )
-
-    def query_event_endpoint(self, endpoint, parameters):
+    def query_event_endpoint(self, endpoint, parameters,method="GET"):
         """
         Queries the event endpoint.
             Args:
@@ -364,40 +466,57 @@ class BarbAPI:
             Returns:
                 dict: The API response data.
         """
-
+        api_response_data = {"endpoint": endpoint, "events": []}
         try:
             api_url = f"{self.api_root}{endpoint}"
-            r = requests.get(url=api_url, params=parameters, headers=self.headers)
+            r = requests.request(
+                url=api_url
+                , params=parameters
+                , headers=self.headers
+                , timeout=300
+                , method=method
+            )
+            r.raise_for_status()
 
             # If the response is not 200 then raise an exception
             if r.status_code != 200:
-                raise Exception(f"Error: {r.status_code} - {r.text}")
+                raise requests.HTTPError(f"Error: {r.status_code} - {r.text}")
 
             r_json = r.json()
+            #print(r_json)
 
             # If events is not in the response then raise an exception
             if "events" not in r_json.keys():
-                raise Exception(f"Error: {r_json['message']}")
+                raise KeyError(f"Error: {r_json['message']}")
 
             # If events is empty then raise an exception
             if len(r_json["events"]) == 0:
-                raise Exception(f"Error: No events returned.")
+                return api_response_data
 
             api_response_data = {"endpoint": endpoint, "events": r_json["events"]}
-            while r.headers.__contains__("X-Next"):
+            count=0
+            while "X-Next" in r.headers:
                 x_next_url = r.headers["X-Next"]
-                r = requests.get(url=x_next_url, headers=self.headers)
+                r = requests.get(
+                    url=x_next_url
+                    , headers=self.headers
+                    ,timeout=300
+                )
+                r.raise_for_status()
                 r_json = r.json()
                 api_response_data["events"] = (
                     api_response_data["events"] + r_json["events"]
                 )
+                print(count)
+                count+=1
 
             return api_response_data
 
         except requests.exceptions.RequestException as e:
-            print(f"An error occurred: {e}")
+            raise requests.exceptions.RequestException(f"An error occurred: {e}")
         except json.JSONDecodeError:
             print("Failed to decode the response.")
+        return api_response_data
 
     def list_stations(self, regex_filter=None):
         """
@@ -408,19 +527,28 @@ class BarbAPI:
         """
 
         api_url = f"{self.api_root}stations"
+        try:
+            api_response_data = requests.get(
+                url=api_url
+                , headers=self.headers
+                ,timeout=300
+            )
+            api_response_data.raise_for_status()
+            list_of_stations = []
+            for x in api_response_data.json():
+                list_of_stations.append(x)
 
-        api_response_data = requests.get(url=api_url, headers=self.headers)
+            if len(list_of_stations) == 0:
+                raise requests.RequestException("Error: No stations returned.")
 
-        list_of_stations = [x["station_name"] for x in api_response_data.json()]
+            if regex_filter is not None:
+                regex = re.compile(regex_filter, flags=re.IGNORECASE)
+                list_of_stations = list(filter(regex.search, list_of_stations))
 
-        if len(list_of_stations) == 0:
-            raise Exception(f"Error: No stations returned.")
-
-        if regex_filter is not None:
-            regex = re.compile(regex_filter, flags=re.IGNORECASE)
-            list_of_stations = list(filter(regex.search, list_of_stations))
-
-        return list_of_stations
+            return list_of_stations
+        except requests.RequestException as req_error:
+            print(api_response_data.content)
+            raise requests.RequestException("error") from req_error
 
     def list_viewing_stations(self, regex_filter=None):
         """
@@ -432,12 +560,16 @@ class BarbAPI:
 
         api_url = f"{self.api_root}viewing_stations"
 
-        api_response_data = requests.get(url=api_url, headers=self.headers)
+        api_response_data = requests.get(
+            url=api_url
+            , headers=self.headers
+            ,timeout=300
+        )
 
-        list_of_stations = [x["viewing_station_name"] for x in api_response_data.json()]
+        list_of_stations = list(api_response_data.json())
 
         if len(list_of_stations) == 0:
-            raise Exception(f"Error: No stations returned.")
+            raise requests.RequestException("Error: No stations returned.")
 
         if regex_filter is not None:
             regex = re.compile(regex_filter, flags=re.IGNORECASE)
@@ -445,7 +577,7 @@ class BarbAPI:
 
         return list_of_stations
 
-    def list_panels(self, regex_filter=None):
+    def list_panels(self, regex_filter=None) ->[list,None]:
         """
         Lists the panels available in the API.
 
@@ -454,12 +586,16 @@ class BarbAPI:
         """
 
         api_url = f"{self.api_root}panels"
-        api_response_data = requests.get(url=api_url, headers=self.headers)
+        api_response_data = requests.get(
+            url=api_url
+            , headers=self.headers
+            ,timeout=300
+        )
 
-        list_of_panels = [x["panel_region"] for x in api_response_data.json()]
+        list_of_panels = list(api_response_data.json())
 
         if len(list_of_panels) == 0:
-            raise Exception(f"Error: No panels returned.")
+            raise requests.RequestException("Error: No panels returned.")
 
         if regex_filter is not None:
             regex = re.compile(regex_filter, flags=re.IGNORECASE)
@@ -476,12 +612,16 @@ class BarbAPI:
         """
 
         api_url = f"{self.api_root}buyers"
-        api_response_data = requests.get(url=api_url, headers=self.headers)
+        api_response_data = requests.get(
+            url=api_url
+            , headers=self.headers
+            ,timeout=300
+        )
 
         list_of_buyers = api_response_data.json()
 
         if len(list_of_buyers) == 0:
-            raise Exception(f"Error: No buyers returned.")
+            raise requests.RequestException("Error: No buyers returned.")
 
         if regex_filter is not None:
             regex = re.compile(regex_filter, flags=re.IGNORECASE)
@@ -498,12 +638,16 @@ class BarbAPI:
         """
 
         api_url = f"{self.api_root}advertisers"
-        api_response_data = requests.get(url=api_url, headers=self.headers)
+        api_response_data = requests.get(
+            url=api_url
+            , headers=self.headers
+            ,timeout=300
+        )
 
         list_of_advertisers = [a["advertiser_name"] for a in api_response_data.json()]
 
         if len(list_of_advertisers) == 0:
-            raise Exception(f"Error: No advertisers returned.")
+            raise requests.RequestException("Error: No advertisers returned.")
 
         if regex_filter is not None:
             regex = re.compile(regex_filter, flags=re.IGNORECASE)
@@ -511,7 +655,7 @@ class BarbAPI:
 
         return list_of_advertisers
 
-    def query_asynch_endpoint(self, endpoint, parameters):
+    def query_asynch_endpoint(self, endpoint, parameters,method="POST"):
         """
         Queries the asynch endpoint.
 
@@ -527,14 +671,23 @@ class BarbAPI:
 
         # Query the API and turn the response into json
         try:
-            r = requests.post(url=api_url, json=parameters, headers=self.headers)
+            r = requests.request(
+                url=api_url
+                , json=parameters
+                , headers=self.headers
+                ,timeout=300
+                ,method=method
+            )
+            r.raise_for_status()
             r_json = r.json()
+            print(r_json)
             self.current_job_id = r_json["job_id"]
             return r_json
         except requests.exceptions.RequestException as e:
             print(f"An error occurred: {e}")
         except json.JSONDecodeError:
             print("Failed to decode the response.")
+        return None
 
     def get_asynch_file_urls(self, job_id=None):
         """
@@ -552,18 +705,24 @@ class BarbAPI:
 
         try:
             api_url = f"{self.api_root}async-batch/results/{job_id}"
-            r = requests.get(url=api_url, headers=self.headers)
+            r = requests.get(
+                url=api_url
+                , headers=self.headers
+                ,timeout=300
+            )
+            r.raise_for_status()
             r_json = r.json()
             if r_json["status"] == "started":
                 return False
             urls = [x["data"] for x in r_json["result"]]
             if len(urls) == 0:
-                raise Exception(f"Error: No urls returned.")
+                raise IndexError("Error: No urls returned.")
             return urls
         except requests.exceptions.RequestException as e:
             print(f"An error occurred: {e}")
         except json.JSONDecodeError:
             print("Failed to decode the response.")
+        return None
 
     def get_asynch_files(self):
         """
@@ -579,8 +738,10 @@ class BarbAPI:
                 df = pd.read_parquet(file)
                 results = pd.concat([results, df])
             return ViewingResultSet(results)
-        except:
+        except pd.errors.DataError as error:
             print("Failed to get the asynch files.")
+            print(error)
+        return None
 
     def ping_job_status(self, job_id=None):
         """
@@ -606,6 +767,55 @@ class BarbAPI:
             f"Job complete. {len(self.current_file_urls)} files are ready for download."
         )
 
+    def query_bulk_endpoint(self, endpoint:str, parameters:dict,method="GET")->list[dict]:
+        """
+        Queries the asynch endpoint.
+
+            Args:
+                endpoint (str): The endpoint to query.
+                parameters (dict): The query parameters.
+
+            Returns:
+                dict: The API response data.
+        """
+
+        api_url = f"{self.api_root}{endpoint}"
+        data_list=[]
+        next_token=True
+        # Query the API and turn the response into json
+        try:
+            while next_token:
+                r = requests.request(
+                    url = api_url
+                    , params = parameters
+                    , headers = self.headers
+                    ,timeout = 300
+                    ,method = method
+                )
+                r.raise_for_status()
+                r_json = r.json()
+                #print("json output:",r_json)
+                #append data
+                if isinstance(r_json, list):
+                    for item in r_json:
+                        data_list.append(item)
+                elif isinstance(r_json,dict):
+                    data_list.append(item)
+                else:
+                    raise TypeError("Wrong data type for",r_json)
+                #continue?
+                if "X-Next" in list(r.headers.keys()):
+                    api_url = r.headers["X-Next"]
+                else:
+                    next_token=False
+            return data_list
+        except requests.exceptions.RequestException as e:
+            print(r.content)
+            print(r.url)
+            raise Warning(f"An error occurred: {e}") from e
+        except json.JSONDecodeError:
+            print("Failed to decode the response.")
+        return None
 
 class APIResultSet:
     """
@@ -622,139 +832,26 @@ class APIResultSet:
 
         self.api_response_data = api_response_data
 
-    def to_dataframe(self):
+class BulkResultSet:
+    """
+    Respresents the bulk result set from the Barb API
+    """
+    def __init__(self, api_response_data: list[dict]):
         """
-        Converts the API response data into a pandas dataframe.
-
-        Returns:
-            pandas.DataFrame: A dataframe containing the API response data.
-
-        """
-        raise NotImplementedError()
-
-    def to_csv(self, file_name):
-        """
-        Saves the API response data as a CSV file.
+        Initialises a new instance of the BulkResultSet class.
 
         Args:
-            file_name (str): The name of the CSV file to save.
-        """
-        self.to_dataframe().to_csv(file_name, index=False)
-
-    def to_excel(self, file_name):
-        """
-        Saves the API response data as an Excel file.
-
-        Args:
-            file_name (str): The name of the Excel file to save.
-        """
-        self.to_dataframe().to_excel(file_name, index=False)
-
-    def to_json(self, file_name):
-        """
-        Saves the API response data as a JSON file.
-
-        Args:
-            file_name (str): The name of the JSON file to save.
-        """
-        with open(file_name, "w") as f:
-            json.dump(self.api_response_data, f)
-
-    def to_sql(self, connection_string, table_name, if_exists="replace"):
-        """
-        Saves the API response data as a SQL table.
-
-        Args:
-            connection_string (str): The connection string to the SQL database.
-            table_name (str): The name of the SQL table to save.
-            if_exists (str): The action to take if the SQL table already exists.
-        """
-        df = self.to_dataframe()
-        engine = sqlalchemy.create_engine(connection_string)
-        df.to_sql(table_name, engine, if_exists=if_exists, index=False)
-
-    def audience_pivot(self):
-        """
-        Converts the API response data into a pandas dataframe with the audience names as columns.
-
-        Returns:
-            pandas.DataFrame: A dataframe containing the API response data with the audience names as columns.
-
-        """
-        df = self.to_dataframe()
-        entity = (
-            "programme_name"
-            if "programme_name" in df.columns
-            else "clearcast_commercial_title"
-            if "clearcast_commercial_title" in df.columns
-            else "activity"
-        )
-        df = pd.pivot_table(
-            df,
-            index=["panel_region", "station_name", "date_of_transmission", entity],
-            columns="audience_name",
-            values="audience_size_hundreds",
-            aggfunc="sum",
-        ).fillna(0)
-        return df
-
-    def ts_plot(self, filter=None):
-        """
-        Creates a plotly time series plot of the API response data.
-
-        Returns:
-            plotly.graph_objs.Figure: A plotly time series plot.
-
+            api_response_data (list[dict]): The API response data.
         """
 
-        df = self.audience_pivot().reset_index()
-        traces = []
-        for i, col in enumerate(df.columns[4:]):
-            # set the visible attribute to False for all traces except the first one
-            visible = i == 0
-            traces.append(
-                go.Scatter(
-                    x=df["date_of_transmission"], y=df[col], name=col, visible=visible
-                )
-            )
-
-        # create the layout for the chart
-        layout = go.Layout(
-            title="Audience by time",
-            xaxis=dict(title="Date"),
-            yaxis=dict(title="Value"),
-            showlegend=False,
-            updatemenus=[
-                dict(
-                    buttons=[
-                        {
-                            "label": col,
-                            "method": "update",
-                            "args": [
-                                {"visible": [col == trace.name for trace in traces]}
-                            ],
-                        }
-                        for col in df.columns[4:]
-                    ],
-                    direction="down",
-                    # showactive=True
-                )
-            ],
-        )
-
-        # create the figure with the traces and layout
-        fig = go.Figure(data=traces, layout=layout)
-
-        # display the chart
-        return fig
-
+        self.api_response_data = api_response_data
 
 class ProgrammeRatingsResultSet(APIResultSet):
     """
     Represents a programme ratings result set from the Barb API.
     """
 
-    def to_dataframe(self):
+    def to_dataframe(self) ->pd.DataFrame:
         """
         Converts the API response data into a pandas dataframe.
 
@@ -763,74 +860,253 @@ class ProgrammeRatingsResultSet(APIResultSet):
 
         """
 
-        if len(self.api_response_data["events"]) == 0:
-            raise Exception(f"Error: No events returned.")
+        # if len(self.api_response_data["events"]) == 0:
+        #     raise Warning("Error: No events returned.")
 
         # Loop through the events and then the audiences within the events
-        df = []
-
-        try:
-            for e in self.api_response_data["events"]:
-                # Handle the possibility of a null programme_content
-                prog_name = e["transmission_log_programme_name"].title()
-                episode_name = None
-                episode_number = None
-                genre = None
-                if e["programme_content"] is not None:
-                    prog_name = e["programme_content"]["content_name"]
-                    if "episode" in e["programme_content"].keys():
-                        episode_name = e["programme_content"]["episode"]["episode_name"]
-                        episode_number = e["programme_content"]["episode"][
+        df_data = []
+        for e in self.api_response_data["events"]:
+            try:
+                e:dict
+                df_data.append(
+                    {
+                        "panel_code": e.get("panel",{}).get("panel_code"),
+                        "panel_region": e.get("panel",{}).get("panel_region"),
+                        "is_macro_region": e.get("panel",{}).get("is_macro_region"),
+                        "station_code": e.get("station",{}).get("station_code"),
+                        "station_name": e.get("station",{}).get("station_name"),
+                        "prog_name": e.get("transmission_log_programme_name"),
+                        "programme_type": e.get("programme_type"),
+                        "programme_start_datetime": e.get("programme_start_datetime",{}).get(
+                            "standard_datetime"
+                        ),
+                        "programme_duration_minutes": e.get("programme_duration"),
+                        "spans_normal_day": e.get("spans_normal_day"),
+                        "sponsor_code": e.get("sponsor",{}).get("sponsor_code"),
+                        "bumpers_included": e.get("sponsor",{}).get("bumpers_included"),
+                        "broadcaster_transmission_code": e.get("broadcaster_transmission_code"),
+                        "live_status": e.get("live_status"),
+                        "uk_premiere": e.get("uk_premier"),
+                        "broadcaster_premiere": e.get("broadcaster_premier"),
+                        "programme_repeat": e.get("repeat"),
+                        "episode_name": None if not(isinstance(e.get(
+                            "programme_content"),dict)) else e.get(
+                            "programme_content",{}).get("episode",{}).get(
+                            "episode_name"
+                        ),
+                        "episode_number": -1 if not(isinstance(e.get(
+                            "programme_content"),dict)) else e.get(
+                                "programme_content",{}).get("episode",{}).get(
                             "episode_number"
-                        ]
-                    if "genre" in e["programme_content"].keys():
-                        genre = e["programme_content"]["genre"]
-
-                for v in e["audience_views"]:
-                    df.append(
-                        {
-                            "panel_region": e["panel"]["panel_region"],
-                            "station_name": e["station"]["station_name"],
-                            "programme_name": prog_name,
-                            "programme_type": e["programme_type"],
-                            "programme_start_datetime": e["programme_start_datetime"][
-                                "standard_datetime"
-                            ],
-                            "programme_duration_minutes": e["programme_duration"],
-                            "spans_normal_day": e["spans_normal_day"],
-                            "uk_premiere": e["uk_premier"],
-                            "broadcaster_premiere": e["broadcaster_premier"],
-                            "programme_repeat": e["repeat"],
-                            "episode_number": episode_number,
-                            "episode_name": episode_name,
-                            "genre": genre,
-                            "audience_name": v["description"],
-                            "audience_size_hundreds": v["audience_size_hundreds"],
-                            "audience_target_size_hundreds": v[
-                                "target_size_in_hundreds"
-                            ],
-                        }
-                    )
-        except:
-            print(
-                "Failed to convert the API response data into a dataframe. Check the API response data for anomalies"
-            )
+                        ),
+                        "series_number": -1 if not(isinstance(e.get(
+                            "programme_content"),dict)) else e.get(
+                                "programme_content",{}).get("series",{}).get(
+                            "series_number"
+                        ),
+                        "number_of_episodes": -1 if not(isinstance(e.get(
+                            "programme_content"),dict)) else e.get(
+                                "programme_content",{}).get("series",{}).get(
+                            "number_of_episodes"
+                        ),
+                        "broadcaster_series_id": -1 if not(isinstance(e.get(
+                            "programme_content"),dict)) else e.get(
+                                "programme_content",{}).get("series",{}).get(
+                            "broadcaster_series_id"
+                        ),
+                        "genre": None if not(isinstance(e.get(
+                            "programme_content"),dict)) else e.get(
+                                "programme_content",{}).get("genre"),
+                        "platforms": e.get("platforms",[]),
+                        "audience_views": e.get("audience_views",[{}]),
+                    }
+                )
+            except AttributeError as error:
+                print(e)
+                raise AttributeError(error) from error
+            except KeyError as error:
+                print(e)
+                raise KeyError(error) from error
         # Convert the result into a data frame
-        df = pd.DataFrame(df)
+        columns_dict={
+            "panel_code": "string",
+            "panel_region": "string",
+            "is_macro_region": "bool",
+            "station_code": "string",
+            "station_name": "string",
+            "prog_name": "string",
+            "programme_type": "string",
+            "programme_start_datetime": "datetime64[ns]",
+            "programme_duration_minutes": "int64",
+            "spans_normal_day": "bool",
+            "sponsor_code": "string",
+            "bumpers_included": "bool",
+            "broadcaster_transmission_code": "string",
+            "live_status": "string",
+            "uk_premiere": "bool",
+            "broadcaster_premiere": "bool",
+            "programme_repeat": "bool",
+            "episode_name": "string",
+            "episode_number": "string",
+            "series_number": "string",
+            "number_of_episodes": "string",
+            "broadcaster_series_id": "string",
+            "genre": "string",
+            "platforms": "object",
+            "audience_views": "object",
+            #"date_of_transmission": "datetime64[ns]"
+        }
+        #verify dtypes
+        if len(df_data)>0:
+            verifry_class = VerifyDtypes()
+            df_data = verifry_class.verify_dtypes(
+                data = df_data
+                ,column_dtypes = columns_dict
+            )
+        df = pd.DataFrame(df_data, columns=list(columns_dict.keys()))
 
-        # Format the transmission_time_period as a pandas datetime
-        df["programme_start_datetime"] = pd.to_datetime(df["programme_start_datetime"])
-        df["date_of_transmission"] = df["programme_start_datetime"].dt.date
+        if not df.empty:
+            # Format the transmission_time_period as a pandas datetime
+            df["programme_start_datetime"] = pd.to_datetime(df["programme_start_datetime"])
+            df["date_of_transmission"] = df["programme_start_datetime"].dt.date
+            #dtypes for each column
+            df=df.astype(dtype=columns_dict)
 
         return df
 
+class ProgrammeScheduleResultSet(BulkResultSet):
+    """
+    Represents a programme ratings result set from the Barb API.
+    """
+
+    def to_dataframe(self) ->pd.DataFrame:
+        """
+        Converts the API response data into a pandas dataframe.
+
+        Returns:
+            pandas.DataFrame: A dataframe containing the API response data.
+
+        """
+
+        # if len(self.api_response_data["events"]) == 0:
+        #     raise Warning("Error: No events returned.")
+
+        # Loop through the events and then the audiences within the events
+        df_data = []
+
+        try:
+            for item in self.api_response_data:
+                item:dict
+                for e in item.get("station_schedule",{}):
+                    e:dict
+                    df_data.append(
+                    {
+                        "scheduled_date": item.get("scheduled_date"),
+                        "station_code": item.get("station",{}).get(
+                            "station_code"
+                        ),
+                        "station_name": item.get("station",{}).get(
+                            "station_name"
+                        ),
+                        "panel_code": item.get("panel",{}).get("panel_code"),
+                        "panel_region": item.get("panel",{}).get("panel_region"),
+                        "is_macro_region": item.get("panel",{}).get(
+                            "is_macro_region"
+                        ),
+                        "broadcaster_premier": e.get("broadcaster_premier"),
+                        "broadcaster_transmission_code": e.get("broadcaster_transmission_code"),
+                        "live_status": e.get("live_status"),
+                        "platforms": e.get("platforms",[]),
+                        "content_name": e.get("programme_content").get("content_name"),
+                        "barb_content_id": e.get("programme_content").get("barb_content_id"),
+                        "broadcaster_content_id": e.get("programme_content").get(
+                            "broadcaster_content_id"),
+                        "metabroadcast_content_id": e.get("programme_content").get(
+                            "metabroadcast_information").get("metabroadcast_content_id"),
+                        "episode_number": e.get("programme_content").get(
+                            "episode").get("episode_number"),
+                        "episode_name": e.get("programme_content").get(
+                            "episode").get("episode_name"),
+                        "series_number": e.get("programme_content").get(
+                            "series").get("series_number"),
+                        "number_of_episodes": e.get("programme_content").get(
+                            "series").get("number_of_episodes"),
+                        "broadcaster_series_id": e.get("programme_content").get(
+                            "series").get("broadcaster_series_id"),
+                        "genre": e.get("programme_content").get("genre"),
+                        "programme_duration": e.get("programme_duration"),
+                        "barb_reporting_datetime": e.get("programme_start_datetime").get(
+                            "barb_reporting_datetime"),
+                        "barb_polling_datetime": e.get("programme_start_datetime").get(
+                            "barb_polling_datetime"),
+                        "standard_datetime": e.get("programme_start_datetime").get(
+                            "standard_datetime"),
+                        "programme_type": e.get("programme_type"),
+                        "repeat": e.get("repeat"),
+                        "spans_normal_day": e.get("spans_normal_day"),
+                        "sponsor_code": e.get("sponsor").get("sponsor_code"),
+                        "bumpers_included": e.get("sponsor").get("bumpers_included"),
+                        "transmission_log_programme_name": e.get("transmission_log_programme_name"),
+                        "uk_premier": e.get("uk_premier")
+                    }
+                )
+        except KeyError as error:
+            print(error)
+        # Convert the result into a data frame
+        columns_dict={
+            "scheduled_date": "datetime64[ns]",
+            "station_code": "string",
+            "station_name": "string",
+            "panel_code": "string",
+            "panel_region": "string",
+            "is_macro_region": "bool",
+            "broadcaster_premier": "bool",
+            "broadcaster_transmission_code": "string",
+            "live_status": "string",
+            "platforms": "object",
+            "content_name": "string",
+            "barb_content_id": "string",
+            "broadcaster_content_id": "string",
+            "metabroadcast_content_id": "string",
+            "episode_number": "int64",
+            "episode_name": "string",
+            "series_number": "string",
+            "number_of_episodes": "int64",
+            "broadcaster_series_id": "string",
+            "genre": "string",
+            "programme_duration": "int64",
+            "barb_reporting_datetime": "string",
+            "barb_polling_datetime": "string",
+            "standard_datetime": "datetime64[ns]",
+            "programme_type": "string",
+            "repeat": "bool",
+            "spans_normal_day": "bool",
+            "sponsor_code": "string",
+            "bumpers_included": "bool",
+            "transmission_log_programme_name": "string",
+            "uk_premier":"bool"
+        }
+        #verify dtypes
+        if len(df_data)>0:
+            verifry_class = VerifyDtypes()
+            verifry_class.verify_dtypes(
+                data=df_data
+                ,column_dtypes=columns_dict
+            )
+        df = pd.DataFrame(df_data, columns=list(columns_dict.keys()))
+
+        if not df.empty:
+            #dtypes for each column
+            df = df.astype(dtype=columns_dict)
+
+        return df
 
 class AdvertisingSpotsResultSet(APIResultSet):
     """
     Represents an advertising spots result set from the Barb API.
     """
 
-    def to_dataframe(self):
+    def to_dataframe(self) ->pd.DataFrame:
         """
         Converts the API response data into a pandas dataframe.
 
@@ -839,75 +1115,80 @@ class AdvertisingSpotsResultSet(APIResultSet):
 
         """
 
-        if len(self.api_response_data["events"]) == 0:
-            raise Exception(f"Error: No events returned.")
+        #if len(self.api_response_data["events"]) == 0:
+        #    raise Exception("Error: No events returned.")
 
         try:
             # Loop through the events and then the audiences within the events
             spot_data = []
-            for e in self.api_response_data["events"]:
-                for v in e["audience_views"]:
-                    spot_data.append(
-                        {
-                            "panel_region": e["panel"]["panel_region"],
-                            "station_name": e["station"]["station_name"],
-                            "spot_type": e["spot_type"],
-                            "spot_start_datetime": e["spot_start_datetime"][
-                                "standard_datetime"
-                            ],
-                            "spot_duration": e["spot_duration"],
-                            "preceding_programme_name": e["preceding_programme_name"],
-                            "succeeding_programme_name": e["succeeding_programme_name"],
-                            "break_type": e["break_type"],
-                            "position_in_break": e["position_in_break"],
-                            "broadcaster_spot_number": e["broadcaster_spot_number"],
-                            "commercial_number": e["commercial_number"],
-                            "clearcast_commercial_title": e["clearcast_information"][
-                                "clearcast_commercial_title"
-                            ]
-                            if e["clearcast_information"] is not None
-                            else None,
-                            "clearcast_match_group_code": e["clearcast_information"][
-                                "match_group_code"
-                            ]
-                            if e["clearcast_information"] is not None
-                            else None,
-                            "clearcast_match_group_name": e["clearcast_information"][
-                                "match_group_name"
-                            ]
-                            if e["clearcast_information"] is not None
-                            else None,
-                            "clearcast_buyer_code": e["clearcast_information"][
-                                "buyer_code"
-                            ]
-                            if e["clearcast_information"] is not None
-                            else None,
-                            "clearcast_buyer_name": e["clearcast_information"][
-                                "buyer_name"
-                            ]
-                            if e["clearcast_information"] is not None
-                            else None,
-                            "clearcast_advertiser_code": e["clearcast_information"][
-                                "advertiser_code"
-                            ]
-                            if e["clearcast_information"] is not None
-                            else None,
-                            "clearcast_advertiser_name": e["clearcast_information"][
-                                "advertiser_name"
-                            ]
-                            if e["clearcast_information"] is not None
-                            else None,
-                            "campaign_approval_id": e["campaign_approval_id"],
-                            "sales_house_name": e["sales_house"]["sales_house_name"],
-                            "audience_name": v["description"],
-                            "audience_size_hundreds": v["audience_size_hundreds"],
-                            "audience_target_size_hundreds": v[
-                                "target_size_in_hundreds"
-                            ],
-                        }
-                    )
+            for e in self.api_response_data.get("events",[{}]):
+                dict_event = dict(e)
+                spot_data.append(
+                    {
+                        "panel_region": e["panel"]["panel_region"],
+                        "panel_code": dict_event["panel"]["panel_code"],
+                        "station_name": dict_event["station"]["station_name"],
+                        "station_code": dict_event["station"]["station_code"],
+                        "spot_type": dict_event["spot_type"],
+                        "spot_start_datetime": dict_event.get("spot_start_datetime",{}).get(
+                            "standard_datetime"),
+                        "spot_duration": dict_event["spot_duration"],
+                        "preceding_programme_name": dict_event["preceding_programme_name"],
+                        "succeeding_programme_name": dict_event["succeeding_programme_name"],
+                        "break_type": dict_event["break_type"],
+                        "position_in_break": dict_event["position_in_break"],
+                        "broadcaster_spot_number": dict_event["broadcaster_spot_number"],
+                        "commercial_number": dict_event["commercial_number"],
+                        "clearcast_commercial_title": dict_event.get(
+                            "clearcast_information",{}).get(
+                            "clearcast_commercial_title",None),
+                        "clearcast_match_group_code": dict_event.get(
+                            "clearcast_information",{}).get(
+                            "match_group_code",None),
+                        "clearcast_match_group_name": dict_event.get(
+                            "clearcast_information",{}).get(
+                            "match_group_name",None),
+                        "clearcast_buyer_code": dict_event.get("clearcast_information",{}).get(
+                            "buyer_code",None),
+                        "clearcast_buyer_name":  dict_event.get("clearcast_information",{}).get(
+                            "buyer_name",None),
+                        "clearcast_advertiser_code": dict_event.get("clearcast_information",{}).get(
+                            "advertiser_code",None),
+                        "clearcast_advertiser_name": dict_event.get("clearcast_information",{}).get(
+                            "advertiser_name",None),
+                        "campaign_approval_id": dict_event["campaign_approval_id"],
+                        "sales_house_name": dict_event.get("sales_house",{}).get(
+                            "sales_house_name"),
+                        "audience_views": dict_event.get("audience_views",[{}]),
+                    }
+                )
             # Convert the result into a data frame
-            spot_data = pd.DataFrame(spot_data)
+            columns=[
+                "panel_region",
+                "panel_code",
+                "station_name",
+                "station_code",
+                "spot_type",
+                "spot_start_datetime",
+                "spot_duration",
+                "preceding_programme_name",
+                "succeeding_programme_name",
+                "break_type",
+                "position_in_break",
+                "broadcaster_spot_number",
+                "commercial_number",
+                "clearcast_commercial_title",
+                "clearcast_match_group_code",
+                "clearcast_match_group_name",
+                "clearcast_buyer_code",
+                "clearcast_buyer_name",
+                "clearcast_advertiser_code",
+                "clearcast_advertiser_name",
+                "campaign_approval_id",
+                "sales_house_name",
+                "audience_views"
+            ]
+            spot_data = pd.DataFrame(data=spot_data, columns=columns)
 
             # Format the transmission_time_period as a pandas datetime
             spot_data["spot_start_datetime"] = pd.to_datetime(
@@ -915,19 +1196,51 @@ class AdvertisingSpotsResultSet(APIResultSet):
             )
             spot_data["date_of_transmission"] = spot_data["spot_start_datetime"].dt.date
 
+            #set dtypes
+            if not spot_data.empty:
+                spot_data=self.dataframe_set_dtypes(spot_data)
             return spot_data
-        except:
-            print(
-                "Failed to convert the API response data into a dataframe. Check the API response data for anomalies"
-            )
+        except pd.errors.DataError as error:
+            print(error)
+        return None
 
+    def dataframe_set_dtypes(self,dataframe:pd.DataFrame):
+        """sets the dtypes for the columns"""
+        dtypes_dict={
+            "panel_region":"string",
+            "panel_code":"int64",
+            "station_name":"string",
+            "station_code":"int64",
+            "spot_type":"string",
+            #"spot_start_datetime":"datetime64[ns]",
+            "spot_duration":"int64",
+            "preceding_programme_name":"string",
+            "succeeding_programme_name":"string",
+            "break_type":"string",
+            "position_in_break":"string",
+            "broadcaster_spot_number":"string",
+            "commercial_number":"string",
+            "clearcast_commercial_title":"string",
+            "clearcast_match_group_code":"string",
+            "clearcast_match_group_name":"string",
+            "clearcast_buyer_code":"string",
+            "clearcast_buyer_name":"string",
+            "clearcast_advertiser_code":"string",
+            "clearcast_advertiser_name":"string",
+            "campaign_approval_id":"string",
+            "sales_house_name":"string",
+            #"audience_views":"object",
+            #"date_of_transmission":"datetime64[ns]"
+        }
+        dataframe=dataframe.astype(dtype=dtypes_dict)
+        return dataframe
 
 class AudiencesByTimeResultSet(APIResultSet):
     """
     Represents an audiences by time result set from the Barb API.
     """
 
-    def to_dataframe(self):
+    def to_dataframe(self) -> pd.DataFrame:
         """
         Converts the API response data into a pandas dataframe.
 
@@ -936,161 +1249,300 @@ class AudiencesByTimeResultSet(APIResultSet):
 
         """
 
-        if len(self.api_response_data["events"]) == 0:
-            raise Exception(f"Error: No events returned.")
+        # if len(self.api_response_data.get("events",[]) == 0:
+        #     raise Exception("Error: No events returned.")
 
         try:
             # Loop through the events and then the audiences within the events
             audience_data = []
-            for e in self.api_response_data["events"]:
-                for v in e["audience_views"]:
+            for e in self.api_response_data.get("events",[]):
+                e:dict
+                for v in e.get("audience_views",[]):
+                    v:dict
                     audience_data.append(
                         {
-                            "panel_region": e["panel"]["panel_region"],
-                            "station_name": e["station"]["station_name"],
-                            "date_of_transmission": e["date_of_transmission"],
-                            "activity": e["activity"],
-                            "transmission_time_period_start": e[
-                                "transmission_time_period_start"
-                            ]["standard_datetime"],
-                            "audience_name": v["description"],
-                            "audience_size_hundreds": v["audience_size_hundreds"],
-                            "audience_target_size_hundreds": v[
+                            "date_of_transmission": e.get("date_of_transmission"),
+                            "panel_code": e.get("panel",{}).get("panel_code"),
+                            "panel_region": e.get("panel",{}).get("panel_region"),
+                            "is_macro_region": e.get("panel",{}).get("is_macro_region"),
+                            "station_code": e.get("station",{}).get("station_code"),
+                            "station_name": e.get("station",{}).get("station_name"),
+                            "activity": e.get("activity"),
+                            "transmission_time_period_duration_mins": e.get(
+                                "transmission_time_period_duration_mins"),
+                            "transmission_time_period_start": e.get(
+                                "transmission_time_period_start",{}
+                            ).get("standard_datetime"),
+                            "platforms": e.get("platforms"),
+                            "audience_code": v.get("audience_code"),
+                            "audience_size_hundreds": v.get("audience_size_hundreds"),
+                            "category_id": v.get("category_id"),
+                            "audience_name": v.get("description"),
+                            "audience_target_size_hundreds": v.get(
                                 "target_size_in_hundreds"
-                            ],
+                            ),
                         }
                     )
             # Convert the result into a data frame
-
-            audience_data = pd.DataFrame(audience_data)
+            columns_dict={
+                "date_of_transmission": "datetime64[ns]",
+                "panel_code": "string",
+                "panel_region": "string",
+                "is_macro_region": "bool",
+                "station_code": "string",
+                "station_name": "string",
+                "activity": "string",
+                "transmission_time_period_duration_mins": "int64",
+                "transmission_time_period_start": "datetime64[ns]",
+                "platforms": "object",
+                "audience_code": "string",
+                "audience_size_hundreds": "int64",
+                "category_id": "string",
+                "audience_name": "string",
+                "audience_target_size_hundreds": "int64",
+            }
+            #verify dtypes
+            if len(audience_data)>0:
+                verifry_class = VerifyDtypes()
+                audience_data = verifry_class.verify_dtypes(
+                    data = audience_data
+                    ,column_dtypes = columns_dict
+                )
+            audience_data = pd.DataFrame(audience_data, columns=list(columns_dict.keys()))
 
             # Format the transmission_time_period as a pandas datetime
-            audience_data["transmission_time_period_start"] = pd.to_datetime(
-                audience_data["transmission_time_period_start"]
-            )
+            if not audience_data.empty:
+                audience_data["transmission_time_period_start"] = pd.to_datetime(
+                    audience_data["transmission_time_period_start"]
+                )
+                audience_data = audience_data.astype(dtype=columns_dict)
 
             return audience_data
-        except:
-            print(
-                "Failed to convert the API response data into a dataframe. Check the API response data for anomalies"
-            )
+        except pd.errors.DataError as error:
+            print(error)
+        return None
 
+class GoogleBucketResultSet(BulkResultSet):
+    """Represents spot Audience result set from the Barb API"""
 
-class ViewingResultSet(APIResultSet):
-    def __init__(self, api_response_data):
-        """
-        Initialises a new instance of the APIResultSet class.
+    def __init__(self, api_response_data: list[dict], endpoint:str):
+        """initalise class"""
+        super().__init__(api_response_data)
+        self.endpoint =endpoint
 
-        Args:
-            api_response_data (dict): The API response data.
-        """
+    def download_parquet(self) -> None:
+        """download the parquet"""
+        print("response_data",self.api_response_data)
+        for results_item in self.api_response_data:
+            print("results_item",results_item)
+            date = results_item.get("session_date")
+            panel = results_item.get("panel_code")
+            for i,link in enumerate(results_item.get("results",[])):
+                print(link)
+                with tempfile.TemporaryDirectory() as td:
+                    r=requests.get(link,timeout=300)
+                    r.raise_for_status()
+                    print(r.headers)
+                    with open(f"{td}/demo_{i}.parquet",mode="wb") as f:
+                        f.write(r.content)
+                    print(f.name)
+                    self.parquet_to_google_bucket(
+                        file=f"{f.name}"
+                        ,date=date
+                        ,panel_code=panel
+                    )
+        return "ok"
 
-        if api_response_data.shape[0] == 0:
-            raise Exception(f"Error: No events returned.")
+    def parquet_to_google_bucket(self, file:str, date:str, panel_code:int) -> None:
+        """upload the parquet to the google bucket"""
+        bucket_name = os.getenv("BUCKET")
+        bucket = storage_client.get_bucket(bucket_name)
+        bucket = storage_client.bucket(bucket_name)
+        result = re.search("(demo_)[0-9]*.parquet$",file)
+        file_name= result[0]
+        blob = bucket.blob(f"{self.endpoint}/date={date}/panel_code={panel_code}/{file_name}")
+        blob.upload_from_filename(filename=file)
+        print("file uploaded")
+        return "ok"
 
-        try:
-            bool_columns = ["TARGETED_PROMOTION", "SKY_ULTRA_HD"]
-            api_response_data[bool_columns] = api_response_data[bool_columns].astype(
-                bool
-            )
-
-            json_columns = [
-                "SESSION_START",
-                "SESSION_END",
-                "HOUSEHOLD",
-                "DEVICE",
-                "PANEL_VIEWERS",
-                "GUEST_VIEWERS",
-                "PROGRAMMES_VIEWED",
-                "SPOTS_VIEWED",
-                "PANEL",
-                "VIEWING_STATION",
-                "START_OF_RECORDING",
-                "VOD_PROVIDER",
-            ]
-
-            for column in json_columns:
-                api_response_data[column] = api_response_data[column].apply(json.loads)
-
-            self.api_response_data = api_response_data
-
-        except:
-            print(
-                "Failed to decode the nested json data. Check the API response data for anomalies"
-            )
-
-    def to_dataframe(self, unpack=None):
+class SpotScheduleResultSet(BulkResultSet):
+    """
+    return dataframe
+    """
+    def to_dataframe(self) ->pd.DataFrame:
         """
         Converts the API response data into a pandas dataframe.
 
-        Args:
-            unpack (list): The columns to unpack
-
         Returns:
             pandas.DataFrame: A dataframe containing the API response data.
+
         """
+
+        #if len(self.api_response_data["events"]) == 0:
+        #    raise Exception("Error: No events returned.")
 
         try:
-            if set(unpack) == set(["viewers", "programmes"]):
-                data_as_dict = self.api_response_data.to_dict(orient="records")
-                rows = []
-                for item in data_as_dict:
-                    row = {}
-                    row.update(item["HOUSEHOLD"])
-                    row.update(item["DEVICE"])
+            # Loop through the events and then the audiences within the events
+            spot_data = []
+            #print(self.api_response_data)
+            for e in self.api_response_data:
+                for item in e.get("spot_schedule",[{}]):
+                    item:dict
+                    platforms=[]
+                    #print("platform type:",type(item.get("platforms",[])))
+                    for platfrom in item.get("platforms",[]):
+                        platforms.append(str(platfrom))
+                    spot_data.append(
+                        {
+                            "scheduled_date":e.get("scheduled_date"),
+                            "station_code":str(e.get("station",{}).get("station_code",{})),
+                            "station_name":str(e.get("station",{}).get("station_name",{})),
+                            "panel_code":str(e.get("panel",{}).get("panel_code",{})),
+                            "panel_region":str(e.get("panel",{}).get("panel_region",{})),
+                            "is_macro_region":str(e.get("panel",{}).get("is_macro_region",{})),
+                            "break_type": str(item.get("break_type")),
+                            "broadcaster_spot_number": str(item.get("broadcaster_spot_number")),
+                            "campaign_approval_id": str(item.get("campaign_approval_id")),
+                            "match_group_code": str(item["clearcast_information"].get(
+                                "match_group_code")),
+                            "match_group_name": str(item["clearcast_information"].get(
+                                "match_group_name")),
+                            "buyer_code": str(item["clearcast_information"].get("buyer_code")),
+                            "buyer_name": str(item["clearcast_information"].get("buyer_name")),
+                            "advertiser_code": str(item["clearcast_information"].get(
+                                "advertiser_code")),
+                            "advertiser_name": str(item["clearcast_information"].get(
+                                "advertiser_name")),
+                            "holding_company_code": str(item["clearcast_information"].get(
+                                "holding_company_code")),
+                            "holding_company_name": str(item["clearcast_information"].get(
+                                "holding_company_name")),
+                            "product_code": str(item["clearcast_information"].get(
+                                "product_code")),
+                            "product_name": str(item["clearcast_information"].get(
+                                "product_name")),
+                            "clearcast_commercial_title": str(item["clearcast_information"].get(
+                                "clearcast_commercial_title")),
+                            "commercial_spot_length": str(item["clearcast_information"].get(
+                                "commercial_spot_length")),
+                            "clearcast_web_address": str(item["clearcast_information"].get(
+                                "clearcast_web_address")),
+                            "commercial_number": str(item.get("commercial_number")),
+                            "platforms": json.dumps(platforms),
+                            "position_in_break": str(item.get("position_in_break")),
+                            "preceeding_programme_name": str(item.get("preceeding_programme_name")),
+                            # "sales_house":{
+                                "sales_house_name": str(item["sales_house"].get(
+                                    "sales_house_name")),
+                                "sales_house_brand_description": str(item["sales_house"].get(
+                                    "sales_house_brand_description")),
+                            # },
+                            "spot_duration": str(item.get("spot_duration")),
+                            # "spot_start_datetime": {
+                                "barb_reporting_datetime": item["spot_start_datetime"].get(
+                                    "barb_reporting_datetime"),
+                                "barb_polling_datetime": item["spot_start_datetime"].get(
+                                    "barb_polling_datetime"),
+                                "standard_datetime": item["spot_start_datetime"].get(
+                                    "standard_datetime"),
+                            # },
+                            "spot_type": str(item.get("spot_type")),
+                            "succeeding_programme_name": str(item.get("succeeding_programme_name"))
+                        }
+                    )
+            # Convert the result into a data frame
+            columns_dict={
+                "scheduled_date":"datetime64[ns]",
+                # "station",
+                # "panel",
+                # "spot_schedule"
+                "station_code":"string",
+                "station_name":"string",
+                "panel_code":"string",
+                "panel_region":"string",
+                "is_macro_region":"string",
+                "break_type":"string",
+                "broadcaster_spot_number":"string",
+                "campaign_approval_id":"string",
+                    "match_group_code":"string",
+                    "match_group_name":"string",
+                    "buyer_code":"string",
+                    "buyer_name":"string",
+                    "advertiser_code":"string",
+                    "advertiser_name":"string",
+                    "holding_company_code":"string",
+                    "holding_company_name":"string",
+                    "product_code":"string",
+                    "product_name":"string",
+                    "clearcast_commercial_title":"string",
+                    "commercial_spot_length":"string",
+                    "clearcast_web_address":"string",
+                "commercial_number":"string",
+                "platforms":"string",
+                "position_in_break":"string",
+                "preceeding_programme_name":"string",
+                # "sales_house":{
+                    "sales_house_name":"string",
+                    "sales_house_brand_description":"string",
+                # },
+                "spot_duration":"string",
+                # "spot_start_datetime": {
+                    "barb_reporting_datetime":"string",
+                    "barb_polling_datetime":"string",
+                    "standard_datetime":"datetime64[ns]",
+                # },
+                "spot_type":"string",
+                "succeeding_programme_name":"string"
+            }
+            #verify dtypes
+            if len(spot_data)>0:
+                verifry_class = VerifyDtypes()
+                verifry_class.verify_dtypes(
+                    data=spot_data
+                    ,column_dtypes=columns_dict
+                )
+            spot_data_frame = pd.DataFrame(data=spot_data, columns=list(columns_dict.keys()))
+            print("data frame:",spot_data_frame)
 
-                    for programme in item["PROGRAMMES_VIEWED"]:
-                        for viewer in item["PANEL_VIEWERS"]:
-                            inner_row = {}
-                            inner_row.update(
-                                {
-                                    "session_start_datetime": item["SESSION_START"][
-                                        "standard_datetime"
-                                    ]
-                                }
-                            )
-                            if "programme_start_datetime" in programme.keys():
-                                inner_row.update(
-                                    {
-                                        "programme_start_datetime": programme[
-                                            "programme_start_datetime"
-                                        ]["standard_datetime"]
-                                    }
-                                )
-                            inner_row.update(
-                                {
-                                    "programme_name": programme["programme_content"][
-                                        "content_name"
-                                    ]
-                                }
-                            )
-                            inner_row.update(viewer)
-                            inner_row.update(row)
-                            rows.append(inner_row)
+            if not spot_data_frame.empty:
+                # Format the transmission_time_period as a pandas datetime
+                spot_data_frame["scheduled_date"] = pd.to_datetime(
+                    spot_data_frame["scheduled_date"]
+                )
+                #set dtypes
+                spot_data_frame=spot_data_frame.astype(dtype=columns_dict)
+            return spot_data_frame
+        except pd.errors.DataError as error:
+            print(error)
+            raise pd.errors.DataError(
+                error
+            ) from error
 
-            # Drop all columns from df with datatype that is a dict
+class VerifyDtypes:
+    """schema verification"""
 
-            df = pd.DataFrame(rows)
-
-            # If it exists, drop the column tv_set_properties
-            for column in ["tv_set_properties", "panel_member_weights"]:
-                if column in df.columns:
-                    df = df.drop(columns=[column])
-
-            df = df.drop_duplicates()
-
-            return df
-        except:
-            print(
-                "Failed to convert the API response data into a dataframe. Check the API response data for anomalies"
-            )
-
-    def to_json(self, file_name):
-        """
-        Converts the API response data into a json object.
-
-        Returns:
-            json: A json containing the API response data.
-        """
-
-        self.api_response_data.to_json(file_name, orient="records")
+    def verify_dtypes(self,data:list[dict],column_dtypes:dict) -> list[dict]:
+        """process of verifiying and changing data"""
+        for item,value in enumerate(data):
+            value:dict
+            for column, dtype in column_dtypes.items():
+                column:str
+                dtype:str
+                series = pd.Series(data={"column":value.get(column)},index=["column"])
+                if dtype.lower()=="datetime64[ns]":
+                    pd.to_datetime(series)
+                elif (dtype.lower()=="string" and not(
+                    isinstance(type(value.get(column)),str))):
+                    data[item][column] = None
+                elif dtype.lower()=="int64" and not(
+                    isinstance(type(value.get(column)),int)):
+                    data[item][column] = 0
+                elif dtype.lower()=="bool" and not(
+                    isinstance(type(value.get(column)),bool)):
+                    data[item][column] = False
+                elif dtype.lower()=="object" and not(
+                    isinstance(type(value.get(column)),list)):
+                    data[item][column]=[]
+                else:
+                    raise TypeError(f"unknown type {dtype} for '{column}'")
+        return data
